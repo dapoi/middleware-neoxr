@@ -4,7 +4,7 @@ const forwardRequest = require('../utils/forwardRequest');
 
 router.get('/', (req, res) => {
   res.json({
-    message: '🚀 Yo! API lu jalan dengan baik',
+    message: '🚀 API nyalaaa!',
     endpoints: {
       savefrom: '/savefrom?url=...',
       fb: '/fb?url=...',
