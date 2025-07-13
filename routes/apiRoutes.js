@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
       youtube: '/youtube?url=...&quality=...&type=...',
       meta: '/meta?q=...'
     },
-    author: 'Daffa 🧑‍💻',
+    author: 'https://github.com/dapoi',
     timestamp: new Date().toISOString()
   });
 });
