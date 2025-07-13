@@ -8,7 +8,7 @@ router.get('/', (req, res) => {
     endpoints: {
       savefrom: '/savefrom?url=...',
       fb: '/fb?url=...',
-      youtube: '/youtube?url=...&quality=...&type=...',
+      youtube: '/youtube?url=...&quality=...',
       meta: '/meta?q=...'
     },
     author: 'https://github.com/dapoi',
