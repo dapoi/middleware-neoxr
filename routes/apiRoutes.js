@@ -2,6 +2,21 @@ const express = require('express');
 const router = express.Router();
 const forwardRequest = require('../utils/forwardRequest');
 
+router.get('/', (req, res) => {
+  res.json({
+    message: '🚀 Yo! API lu jalan dengan baik',
+    endpoints: {
+      savefrom: '/savefrom?url=...',
+      fb: '/fb?url=...',
+      youtube: '/youtube?url=...&quality=...&type=...',
+      meta: '/meta?q=...'
+    },
+    author: 'Daffa 🧑‍💻',
+    timestamp: new Date().toISOString()
+  });
+});
+
+
 router.get('/savefrom', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
