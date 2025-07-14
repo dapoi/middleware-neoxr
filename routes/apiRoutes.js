@@ -4,12 +4,14 @@ const forwardRequest = require('../utils/forwardRequest');
 
 router.get('/', (req, res) => {
   res.json({
-    message: '🚀 API nyalaaa!',
+    message: '🚀 API nyala!',
     endpoints: {
-      savefrom: '/savefrom?url=...',
-      fb: '/fb?url=...',
-      youtube: '/youtube?url=...&quality=...',
-      meta: '/meta?q=...'
+      fb: '/api/fb?url=<video_url>',
+      ig: '/api/ig?url=<video_url>',
+      tiktok: '/api/tiktok?url=<video_url>',
+      twitter: '/api/twitter?url=<tweet_url>',
+      youtube: '/api/youtube?url=<video_url>&quality=<quality>',
+      meta: '/api/meta?q=<query>'
     },
     author: 'https://github.com/dapoi',
     timestamp: new Date().toISOString()
