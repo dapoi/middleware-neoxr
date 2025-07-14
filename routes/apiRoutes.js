@@ -16,21 +16,36 @@ router.get('/', (req, res) => {
   });
 });
 
-
-router.get('/savefrom', async (req, res) => {
-  const url = req.query.url;
-  if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ URL tidak valid' });
-  }
-  await forwardRequest(res, 'savefrom', { url });
-});
-
 router.get('/fb', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ URL tidak valid' });
   }
   await forwardRequest(res, 'fb', { url });
+});
+
+router.get('/ig', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ URL tidak valid' });
+  }
+  await forwardRequest(res, 'ig', { url });
+});
+
+router.get('/tiktok', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ URL tidak valid' });
+  }
+  await forwardRequest(res, 'tiktok', { url });
+});
+
+router.get('/twitter', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ URL tidak valid' });
+  }
+  await forwardRequest(res, 'twitter', { url });
 });
 
 router.get('/youtube', async (req, res) => {
