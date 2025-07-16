@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 const apiRoutes = require('./routes/api-routes');
 
 dotenv.config();
@@ -15,7 +16,17 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-app.use('/', apiRoutes);
+
+// Serve static files from public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve landing page at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API routes under /api
+app.use('/api', apiRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
