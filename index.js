@@ -1,7 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
-const apiRoutes = require('./routes/apiRoutes');
+const apiRoutes = require('./routes/api-routes');
 
 dotenv.config();
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const forwardRequest = require('../utils/forwardRequest');
+const forwardRequest = require('../utils/forward-request');
 
 router.get('/', (req, res) => {
   res.json({
