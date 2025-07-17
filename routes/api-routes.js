@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const forwardRequest = require('../utils/forward-request');
+const fs = require('fs');
+const path = require('path');
+const configPath = path.join(__dirname, '../utils/app-config.json');
 
 router.get('/', (req, res) => {
   res.json({
@@ -74,3 +77,26 @@ router.get('/meta', async (req, res) => {
 });
 
 module.exports = router;
+
+// GET app config
+router.get('/app-config', (_req, res) => {
+  let config = { isDownloaderFeatureActive: true, isImageGeneratorFeatureActive: true };
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {}
+  res.json({
+    version: require('../package.json').version,
+    ...config
+  });
+});
+
+// POST app config (update)
+router.post('/app-config', express.json(), (req, res) => {
+  const { isDownloaderFeatureActive, isImageGeneratorFeatureActive } = req.body;
+  const newConfig = {
+    isDownloaderFeatureActive: !!isDownloaderFeatureActive,
+    isImageGeneratorFeatureActive: !!isImageGeneratorFeatureActive
+  };
+  fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
+  res.json({ success: true, ...newConfig });
+});

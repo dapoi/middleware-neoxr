@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Config</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fb;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2.5rem 2rem 2rem 2rem;
+      min-width: 340px;
+      max-width: 95vw;
+      margin: 2rem 0;
+    }
+    h1 {
+      text-align: center;
+      color: #2d3748;
+      margin-bottom: 2rem;
+    }
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem 0.5rem;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 2.5rem;
+      justify-content: flex-start;
+    }
+    .toggle-label {
+      font-size: 1.1rem;
+      color: #444;
+      flex: 1;
+      min-width: 180px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 28px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #ccc;
+      border-radius: 28px;
+      transition: .3s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    input:checked + .slider {
+      background: #4f8cff;
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .version {
+      text-align: right;
+      color: #888;
+      font-size: 1rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 500px) {
+      .card { min-width: unset; padding: 1.2rem 0.5rem; }
+      h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>App Config</h1>
+    <div class="toggle-group">
+      <span class="toggle-label">Downloader Feature</span>
+      <label class="switch">
+        <input type="checkbox" id="downloaderToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-group">
+      <span class="toggle-label">Image Generator Feature</span>
+      <label class="switch">
+        <input type="checkbox" id="imageGenToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="version">
+      <strong>App Version:</strong> <span id="appVersion">-</span>
+    </div>
+  </div>
+  <script>
+    async function fetchConfig() {
+      const res = await fetch('/api/app-config');
+      const data = await res.json();
+      document.getElementById('downloaderToggle').checked = data.isDownloaderFeatureActive;
+      document.getElementById('imageGenToggle').checked = data.isImageGeneratorFeatureActive;
+      document.getElementById('appVersion').textContent = data.version;
+    }
+    async function updateConfig() {
+      await fetch('/api/app-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
+          isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked
+        })
+      });
+    }
+    document.getElementById('downloaderToggle').addEventListener('change', updateConfig);
+    document.getElementById('imageGenToggle').addEventListener('change', updateConfig);
+    fetchConfig();
+  </script>
+</body>
+</html>
