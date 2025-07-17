@@ -79,23 +79,33 @@ router.get('/meta', async (req, res) => {
 module.exports = router;
 
 // GET app config
+
+// GET app config
 router.get('/app-config', (_req, res) => {
-  let config = { isDownloaderFeatureActive: true, isImageGeneratorFeatureActive: true };
+  let config = { version: '1.0.0', isDownloaderFeatureActive: true, isImageGeneratorFeatureActive: true };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch (e) {}
-  res.json({
-    version: require('../package.json').version,
-    ...config
-  });
+  res.json(config);
 });
 
 // POST app config (update)
+
+// POST app config (update)
 router.post('/app-config', express.json(), (req, res) => {
-  const { isDownloaderFeatureActive, isImageGeneratorFeatureActive } = req.body;
+  // Read current config
+  let currentConfig = { version: '1.0.0', isDownloaderFeatureActive: true, isImageGeneratorFeatureActive: true };
+  try {
+    currentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {}
+
+  // Merge new values with current config
   const newConfig = {
-    isDownloaderFeatureActive: !!isDownloaderFeatureActive,
-    isImageGeneratorFeatureActive: !!isImageGeneratorFeatureActive
+    ...currentConfig,
+    ...req.body,
+    isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
+    isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
+    version: req.body.version !== undefined ? req.body.version : currentConfig.version
   };
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
   res.json({ success: true, ...newConfig });

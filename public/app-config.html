@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f4f6fb;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #f7faff 0%, #e9f0fb 100%);
       margin: 0;
       min-height: 100vh;
       display: flex;
@@ -18,38 +18,50 @@
     }
     .card {
       background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 2.5rem 2rem 2rem 2rem;
+      border-radius: 22px;
+      box-shadow: 0 6px 32px 0 rgba(80,120,255,0.10);
+      padding: 2.7rem 2.2rem 2.2rem 2.2rem;
       min-width: 340px;
       max-width: 95vw;
       margin: 2rem 0;
+      border: 1.5px solid #e6eaff;
     }
     h1 {
       text-align: center;
-      color: #2d3748;
-      margin-bottom: 2rem;
+      color: #1a2540;
+      margin-bottom: 1.1rem;
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -1px;
     }
     .toggle-group {
       display: flex;
       align-items: center;
-      margin-bottom: 1.5rem;
-      padding: 1rem 0.5rem;
-      border-bottom: 1px solid #f0f0f0;
-      gap: 2.5rem;
+      margin-bottom: 1.3rem;
+      padding: 0.7rem 0.5rem;
+      border-bottom: 1px solid #f2f4fa;
+      gap: 2.2rem;
       justify-content: flex-start;
+      background: none;
+    }
+    .toggle-group:last-child {
+      border-bottom: none;
     }
     .toggle-label {
-      font-size: 1.1rem;
-      color: #444;
+      font-size: 1.13rem;
+      color: #232b3b;
+      font-weight: 500;
       flex: 1;
       min-width: 180px;
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
     }
     .switch {
       position: relative;
       display: inline-block;
-      width: 48px;
-      height: 28px;
+      width: 44px;
+      height: 24px;
     }
     .switch input {
       opacity: 0;
@@ -60,81 +72,204 @@
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: #ccc;
-      border-radius: 28px;
-      transition: .3s;
+      background: #e3e8f0;
+      border-radius: 24px;
+      transition: background 0.2s;
+      box-shadow: 0 1px 4px #b5cfff22;
     }
     .slider:before {
       position: absolute;
       content: "";
-      height: 22px;
-      width: 22px;
+      height: 18px;
+      width: 18px;
       left: 3px;
       bottom: 3px;
       background: #fff;
       border-radius: 50%;
-      transition: .3s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: .2s;
+      box-shadow: 0 2px 8px #b5cfff33;
     }
     input:checked + .slider {
-      background: #4f8cff;
+      background: linear-gradient(90deg,#4f8cff 60%,#6fc3ff 100%);
     }
     input:checked + .slider:before {
       transform: translateX(20px);
+      background: #eaf3ff;
     }
-    .version {
-      text-align: right;
-      color: #888;
-      font-size: 1rem;
-      margin-top: 1.5rem;
+    .toggle-group input[type="text"] {
+      border: none;
+      background: #f2f6ff;
+      border-radius: 7px;
+      padding: 6px 12px;
+      font-size: 1.08rem;
+      color: #1a2540;
+      box-shadow: 0 1px 4px #b5cfff11;
+      outline: none;
+      transition: box-shadow 0.18s, background 0.18s;
+    }
+    .toggle-group input[type="text"]:focus {
+      background: #eaf3ff;
+      box-shadow: 0 2px 8px #4f8cff22;
+    }
+    .toggle-group button {
+      padding: 6px 18px;
+      font-size: 1.08rem;
+      border-radius: 7px;
+      border: none;
+      background: linear-gradient(90deg,#4f8cff 60%,#6fc3ff 100%);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 2px 8px #4f8cff22;
+      transition: background 0.18s, opacity 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .toggle-group button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .toast {
+      position: fixed;
+      top: 32px;
+      right: 32px;
+      background: #fff;
+      color: #1a2540;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px #4f8cff22;
+      padding: 1rem 1.5rem;
+      font-size: 1.08rem;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+      transform: translateY(-20px);
+    }
+    .toast.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
     }
     @media (max-width: 500px) {
       .card { min-width: unset; padding: 1.2rem 0.5rem; }
       h1 { font-size: 1.3rem; }
+      .toggle-label { font-size: 1rem; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>App Config</h1>
+    <h1 style="margin-bottom: 1.2rem;">App Configuration</h1>
+    <div style="margin-bottom: 1.5rem; color: #666; text-align: center; font-size: 1.08rem;">Easily enable/disable features and update your app version.</div>
     <div class="toggle-group">
-      <span class="toggle-label">Downloader Feature</span>
+      <span class="toggle-label">
+        <span style="display:inline-flex;align-items:center;vertical-align:middle;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="margin-right:0.3em;"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="#4f8cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="17" width="16" height="4" rx="2" fill="#eaf3ff"/></svg>
+        </span>
+        Downloader Feature
+      </span>
       <label class="switch">
         <input type="checkbox" id="downloaderToggle">
         <span class="slider"></span>
       </label>
     </div>
     <div class="toggle-group">
-      <span class="toggle-label">Image Generator Feature</span>
+      <span class="toggle-label">
+        <span style="display:inline-flex;align-items:center;vertical-align:middle;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="margin-right:0.3em;"><rect x="3" y="5" width="18" height="14" rx="3" fill="#eaf3ff" stroke="#4f8cff" stroke-width="2"/><circle cx="8" cy="10" r="2" fill="#4f8cff"/><path d="M21 19l-5.5-7-4.5 6-3-4L3 19" stroke="#4f8cff" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        Image Generator Feature
+      </span>
       <label class="switch">
         <input type="checkbox" id="imageGenToggle">
         <span class="slider"></span>
       </label>
     </div>
-    <div class="version">
-      <strong>App Version:</strong> <span id="appVersion">-</span>
+    <div class="toggle-group" style="border-bottom: none; margin-bottom: 0; margin-top: 2.2rem;">
+      <span class="toggle-label">
+        <span style="display:inline-flex;align-items:center;vertical-align:middle;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="margin-right:0.3em;"><rect x="4" y="4" width="16" height="16" rx="3" fill="#eaf3ff" stroke="#4f8cff" stroke-width="2"/><path d="M8 8h8v2H8z" fill="#4f8cff"/><rect x="8" y="12" width="8" height="2" rx="1" fill="#4f8cff"/></svg>
+        </span>
+        App Version
+      </span>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="text" id="appVersionInput" style="width: 90px; font-size: 1.05rem; padding: 3px 8px; border-radius: 7px; border: 1.5px solid #b5cfff; background: #f7faff; outline: none; transition: border 0.2s; margin-right: 2px;" />
+        <button id="saveVersionBtn" disabled style="padding: 3px 14px; font-size: 1.05rem; border-radius: 7px; border: none; background: linear-gradient(90deg,#4f8cff 60%,#6fc3ff 100%); color: #fff; cursor: pointer; font-weight: 500; box-shadow: 0 2px 8px #4f8cff22; transition: background 0.2s; opacity:0.6;">Save</button>
+      </div>
     </div>
   </div>
   <script>
+    let currentVersion = '';
+    function updateSaveButtonState() {
+      const input = document.getElementById('appVersionInput');
+      const btn = document.getElementById('saveVersionBtn');
+      const val = input.value.trim();
+      if (!val || val === currentVersion) {
+        btn.disabled = true;
+        btn.style.opacity = 0.6;
+        btn.style.cursor = 'not-allowed';
+      } else {
+        btn.disabled = false;
+        btn.style.opacity = 1;
+        btn.style.cursor = 'pointer';
+      }
+    }
+
     async function fetchConfig() {
       const res = await fetch('/api/app-config');
       const data = await res.json();
       document.getElementById('downloaderToggle').checked = data.isDownloaderFeatureActive;
       document.getElementById('imageGenToggle').checked = data.isImageGeneratorFeatureActive;
-      document.getElementById('appVersion').textContent = data.version;
+      document.getElementById('appVersionInput').value = data.version || '';
+      currentVersion = data.version || '';
+      updateSaveButtonState();
     }
-    async function updateConfig() {
+
+    function showToast(message) {
+      let toast = document.getElementById('modernToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'modernToast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+      }
+      toast.innerHTML = `<span style="color:#3bbf5c;display:inline-flex;align-items:center;"><svg width='20' height='20' viewBox='0 0 24 24' fill='none'><circle cx='12' cy='12' r='12' fill='#eafbe7'/><path d='M8 12.5l2.5 2.5L16 9' stroke='#3bbf5c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg></span> ${message}`;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1600);
+    }
+
+    async function updateConfig(sendVersion = false) {
+      const body = {
+        isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
+        isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked
+      };
+      if (sendVersion) {
+        body.version = document.getElementById('appVersionInput').value.trim() || currentVersion;
+      }
       await fetch('/api/app-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
-          isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked
-        })
+        body: JSON.stringify(body)
       });
+      if (sendVersion) {
+        currentVersion = body.version;
+        document.getElementById('appVersionInput').value = currentVersion;
+        updateSaveButtonState();
+        showToast('Version saved!');
+      }
     }
-    document.getElementById('downloaderToggle').addEventListener('change', updateConfig);
-    document.getElementById('imageGenToggle').addEventListener('change', updateConfig);
+
+    document.getElementById('downloaderToggle').addEventListener('change', () => updateConfig(false));
+    document.getElementById('imageGenToggle').addEventListener('change', () => updateConfig(false));
+    document.getElementById('saveVersionBtn').addEventListener('click', () => updateConfig(true));
+    document.getElementById('appVersionInput').addEventListener('input', updateSaveButtonState);
     fetchConfig();
   </script>
 </body>
