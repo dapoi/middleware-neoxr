@@ -79,8 +79,6 @@ router.get('/meta', async (req, res) => {
 module.exports = router;
 
 // GET app config
-
-// GET app config
 router.get('/app-config', (_req, res) => {
   let config = { version: '1.0.0', isDownloaderFeatureActive: true, isImageGeneratorFeatureActive: true };
   try {
@@ -88,8 +86,6 @@ router.get('/app-config', (_req, res) => {
   } catch (e) {}
   res.json(config);
 });
-
-// POST app config (update)
 
 // POST app config (update)
 router.post('/app-config', express.json(), (req, res) => {
