@@ -6,123 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MEVER - Social Media Saver</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="index.css?v=2">
 </head>
 
 <body>
     <div class="container">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-            <div id="lang-switch"
-                style="display:inline-flex;align-items:center;background:#f0f2ff;border-radius:20px;padding:2px 8px;box-shadow:0 2px 8px rgba(44,62,80,0.07);">
-                <button id="lang-id"
-                    style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;border-radius:16px;color:#6c7cfb;font-weight:600;transition:background 0.2s;">🇮🇩</button>
-                <button id="lang-en"
-                    style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;border-radius:16px;color:#6c7cfb;font-weight:600;transition:background 0.2s;">🇬🇧</button>
-            </div>
-        </div>
-        <div class="logo" style="color:#6c7cfb;">MEVER</div>
-        <div class="subtitle" id="subtitle">Social Media Saver</div>
-        <div class="desc" id="desc">
-            <span id="desc-main" style="display:block;margin-bottom:6px;">Easiest way to download your favorite content
-                from the biggest social media platforms.</span>
+        <div class="logo">MEVER</div>
+        <div class="subtitle">Social Media Saver</div>
+        <div class="desc">
+            <span>Easiest way to download your favorite content from the biggest social media platforms.</span>
         </div>
         <div class="platforms">
-            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" title="Facebook" />
-            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" title="Instagram" />
-            <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" title="Twitter" />
-            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok" title="TikTok" />
-            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" title="YouTube" />
+            <img src="icons/facebook.png" alt="Facebook" title="Facebook" />
+            <img src="icons/instagram.png" alt="Instagram" title="Instagram" />
+            <img src="icons/twitter.png" alt="Twitter" title="Twitter" />
+            <img src="icons/tiktok.png" alt="TikTok" title="TikTok" />
+            <img src="icons/youtube.png" alt="YouTube" title="YouTube" />
         </div>
-        <a class="download-btn" id="download-btn" href="https://play.google.com/store/apps/details?id=com.mever.app"
-            target="_blank">
-            <span id="download-btn-text">Download di Play Store</span>
+        <a class="download-btn" href="https://play.google.com/store/apps/details?id=com.mever.app" target="_blank">
+            <span>Download on Play Store</span>
         </a>
         <div class="features">
-            <h3 id="features-title">Fitur Unggulan:</h3>
-            <ul id="features-list">
-                <li>Download video & gambar dari berbagai platform</li>
-                <li>Gratis & mudah digunakan</li>
-                <li>Lihat hasil unduhan langsung dalam aplikasi</li>
-                <li>Keamanan data terjamin</li>
+            <h3>Key Features:</h3>
+            <ul>
+                <li>Download videos & images from multiple platforms</li>
+                <li>Free & easy to use</li>
+                <li>View downloads directly in the app</li>
+                <li>Data security guaranteed</li>
             </ul>
         </div>
         <div class="footer">
-            <span id="footer-main">&copy; 2025 MEVER. All rights reserved.</span><br>
+            <span>&copy; 2025 MEVER. All rights reserved.</span><br><br>
+            <a href="/privacy-policy" style="color: #6c7cfb; text-decoration: none; font-size: 0.9rem;">Privacy Policy</a>
         </div>
     </div>
-    <script>
-        const langData = {
-            id: {
-                subtitle: 'Social Media Saver',
-                desc: 'Cara termudah untuk mengunduh konten favorit dari platform media sosial terbesar.',
-                downloadBtn: 'Unduh di Play Store',
-                featuresTitle: 'Fitur Unggulan:',
-                featuresList: [
-                    'Unduh video & gambar dari berbagai platform',
-                    'Gratis & mudah digunakan',
-                    'Lihat hasil unduhan langsung dalam aplikasi',
-                    'Keamanan data terjamin'
-                ],
-                footerMain: '&copy; 2025 MEVER. Semua hak cipta dilindungi.',
-            },
-            en: {
-                subtitle: 'Social Media Saver',
-                desc: 'Easiest way to download your favorite content from the biggest social media platforms.',
-                downloadBtn: 'Download on Play Store',
-                featuresTitle: 'Key Features:',
-                featuresList: [
-                    'Download videos & images from multiple platforms',
-                    'Free & easy to use',
-                    'View downloads directly in the app',
-                    'Data security guaranteed'
-                ],
-                footerMain: '&copy; 2025 MEVER. All rights reserved.',
-                footerContact: 'Contact: support@mever.app'
-            }
-        };
-        let lang = 'id'; // Default language
-        function setLanguage(newLang) {
-            lang = newLang;
-            document.getElementById('subtitle').textContent = langData[lang].subtitle;
-            document.getElementById('desc-main').textContent = langData[lang].desc;
-            document.getElementById('download-btn-text').textContent = langData[lang].downloadBtn;
-            document.getElementById('features-title').textContent = langData[lang].featuresTitle;
-            const featuresList = document.getElementById('features-list');
-            featuresList.innerHTML = '';
-            langData[lang].featuresList.forEach(feature => {
-                const li = document.createElement('li');
-                li.textContent = feature;
-                featuresList.appendChild(li);
-            });
-            document.getElementById('footer-main').innerHTML = langData[lang].footerMain;
-
-            // Highlight active language button
-            const btnId = document.getElementById('lang-id');
-            const btnEn = document.getElementById('lang-en');
-            const activeBg = '#6c7cfb';
-            const activeShadow = '0 4px 16px rgba(44, 62, 80, 0.10)';
-            const inactiveBg = 'none';
-            const inactiveShadow = 'none';
-            if (lang === 'id') {
-                btnId.style.background = activeBg;
-                btnId.style.color = '#fff';
-                btnId.style.boxShadow = activeShadow;
-                btnEn.style.background = inactiveBg;
-                btnEn.style.color = '#6c7cfb';
-                btnEn.style.boxShadow = inactiveShadow;
-            } else {
-                btnEn.style.background = activeBg;
-                btnEn.style.color = '#fff';
-                btnEn.style.boxShadow = activeShadow;
-                btnId.style.background = inactiveBg;
-                btnId.style.color = '#6c7cfb';
-                btnId.style.boxShadow = inactiveShadow;
-            }
-        }
-        document.getElementById('lang-id').addEventListener('click', () => setLanguage('id'));
-        document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
-        // Set default language on load
-        setLanguage(lang);
-    </script>
 </body>
 </html>

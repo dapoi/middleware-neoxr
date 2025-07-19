@@ -9,7 +9,18 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"]
+    }
+  }
+}));
 
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 menit
@@ -25,6 +36,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Serve landing page at root
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve privacy policy page
+app.get('/privacy-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy-policy.html'));
 });
 
 // API routes under /api
