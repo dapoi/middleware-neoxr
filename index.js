@@ -1,14 +1,15 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const path = require('path');
 const apiRoutes = require('./routes/api-routes');
-const licenseRoute = require('./routes/license-route');
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(helmet());
 
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 menit
@@ -28,9 +29,6 @@ app.get('/', (req, res) => {
 
 // API routes under /api
 app.use('/api', apiRoutes);
-
-// License route
-app.use('/', licenseRoute);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
