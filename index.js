@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const apiRoutes = require('./routes/api-routes');
+const licenseRoute = require('./routes/license-route');
 
 dotenv.config();
 
@@ -27,6 +28,9 @@ app.get('/', (req, res) => {
 
 // API routes under /api
 app.use('/api', apiRoutes);
+
+// License route
+app.use('/', licenseRoute);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
