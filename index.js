@@ -43,6 +43,11 @@ app.get('/privacy-policy', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'privacy-policy.html'));
 });
 
+// Serve license page
+app.get('/license', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'license.html'));
+});
+
 // API routes under /api
 app.use('/api', apiRoutes);
 
