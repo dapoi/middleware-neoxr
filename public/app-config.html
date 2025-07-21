@@ -285,14 +285,21 @@
 
     async function fetchConfig() {
       try {
-        console.log('Fetching config from /api/app-config...');
+        // First check if user is authenticated
+        console.log('Checking authentication...');
+        const authRes = await fetch('/api/auth-check');
+        if (authRes.status === 401) {
+          console.log('Not authenticated, redirecting to login');
+          window.location.href = '/admin/login';
+          return;
+        }
+        
+        console.log('User authenticated, fetching config from /api/app-config...');
         const res = await fetch('/api/app-config');
         console.log('Response status:', res.status);
         
-        if (res.status === 401) {
-          // Not authenticated, redirect to login
-          window.location.href = '/admin/login';
-          return;
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
         
         const data = await res.json();

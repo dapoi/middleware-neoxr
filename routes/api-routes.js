@@ -77,6 +77,11 @@ router.get('/meta', async (req, res) => {
   });
 });
 
+// Check authentication status - Protected endpoint
+router.get('/auth-check', requireAuth, (_req, res) => {
+  res.json({ authenticated: true });
+});
+
 // GET app config - Public endpoint
 router.get('/app-config', (_req, res) => {
   let config = { 
