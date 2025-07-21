@@ -77,10 +77,8 @@ router.get('/meta', async (req, res) => {
   });
 });
 
-module.exports = router;
-
-// GET app config - Protected endpoint
-router.get('/app-config', requireAuth, (_req, res) => {
+// GET app config - Public endpoint
+router.get('/app-config', (_req, res) => {
   let config = { 
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
