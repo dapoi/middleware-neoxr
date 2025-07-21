@@ -1,5 +1,10 @@
 {
   "version": "1.0.0",
   "isDownloaderFeatureActive": true,
-  "isImageGeneratorFeatureActive": true
+  "isImageGeneratorFeatureActive": true,
+  "youtubeResolutions": [
+    "360p",
+    "480p",
+    "720p"
+  ]
 }

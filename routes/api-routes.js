@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forwardRequest = require('../utils/forward-request');
+const { requireAuth } = require('../utils/auth-middleware');
 const fs = require('fs');
 const path = require('path');
 const configPath = path.join(__dirname, '../utils/app-config.json');
@@ -78,31 +79,62 @@ router.get('/meta', async (req, res) => {
 
 module.exports = router;
 
-// GET app config
-router.get('/app-config', (_req, res) => {
-  let config = { version: '1.0.0', isDownloaderFeatureActive: true, isImageGeneratorFeatureActive: true };
+// GET app config - Protected endpoint
+router.get('/app-config', requireAuth, (_req, res) => {
+  let config = { 
+    version: '1.0.0', 
+    isDownloaderFeatureActive: true, 
+    isImageGeneratorFeatureActive: true,
+    youtubeResolutions: ["360p", "480p", "720p", "1080p"]
+  };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch (e) {}
   res.json(config);
 });
 
-// POST app config (update)
-router.post('/app-config', express.json(), (req, res) => {
+// POST app config (update) - Protected endpoint
+router.post('/app-config', requireAuth, express.json(), (req, res) => {
   // Read current config
-  let currentConfig = { version: '1.0.0', isDownloaderFeatureActive: true, isImageGeneratorFeatureActive: true };
+  let currentConfig = { 
+    version: '1.0.0', 
+    isDownloaderFeatureActive: true, 
+    isImageGeneratorFeatureActive: true,
+    youtubeResolutions: ["360p", "480p", "720p", "1080p"]
+  };
   try {
     currentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch (e) {}
 
-  // Merge new values with current config
+  // Always convert youtubeResolutions to array format for storage
+  let youtubeResolutions = [];
+  
+  if (req.body.youtubeResolutions) {
+    if (typeof req.body.youtubeResolutions === 'object' && !Array.isArray(req.body.youtubeResolutions)) {
+      // Convert boolean object from UI to array of enabled resolutions
+      Object.keys(req.body.youtubeResolutions).forEach(resolution => {
+        if (req.body.youtubeResolutions[resolution] === true) {
+          youtubeResolutions.push(resolution);
+        }
+      });
+    } else if (Array.isArray(req.body.youtubeResolutions)) {
+      youtubeResolutions = req.body.youtubeResolutions;
+    }
+  } else {
+    // Keep current resolutions if not provided
+    youtubeResolutions = Array.isArray(currentConfig.youtubeResolutions) 
+      ? currentConfig.youtubeResolutions 
+      : Object.keys(currentConfig.youtubeResolutions || {}).filter(key => currentConfig.youtubeResolutions[key]);
+  }
+
+  // Build clean config object (never use spread operator with req.body)
   const newConfig = {
-    ...currentConfig,
-    ...req.body,
+    version: req.body.version !== undefined ? req.body.version : currentConfig.version,
     isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
     isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
-    version: req.body.version !== undefined ? req.body.version : currentConfig.version
+    youtubeResolutions
   };
+  
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
   res.json({ success: true, ...newConfig });
 });

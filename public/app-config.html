@@ -5,11 +5,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App Config</title>
   <link rel="stylesheet" href="app-config.css">
+  <style>
+    /* Section Divider */
+    .section-divider {
+      margin: 24px 0 16px 0;
+      padding: 16px 0;
+      border-top: 2px solid #f0f4f8;
+    }
+    
+    .section-divider h3 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    
+    .section-subtitle {
+      margin: 0;
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 400;
+    }
+    
+    /* Resolution Toggle Styling */
+    .resolution-toggle {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      padding: 12px 16px;
+      transition: all 0.2s ease;
+    }
+    
+    .resolution-toggle:hover {
+      border-color: #cbd5e0;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .resolution-toggle .toggle-label {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+    }
+    
+    .resolution-quality {
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+    
+    .resolution-desc {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 400;
+    }
+    
+    .resolution-icon {
+      margin-bottom: 4px;
+    }
+    
+    /* Resolution Switch Styling */
+    .resolution-switch .slider {
+      background-color: #e5e7eb;
+      border: 1px solid #d1d5db;
+    }
+    
+    .resolution-switch input:checked + .slider {
+      background-color: #6366f1;
+      border-color: #6366f1;
+    }
+    
+    .resolution-switch .slider:before {
+      background-color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Disabled state for resolution toggles */
+    .resolution-toggle:has(input:not(:checked)) {
+      opacity: 0.7;
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    }
+    
+    .resolution-toggle:has(input:not(:checked)) .resolution-quality {
+      color: #9ca3af;
+    }
+    
+    .resolution-toggle:has(input:not(:checked)) .resolution-desc {
+      color: #d1d5db;
+    }
+    
+    /* Logout Button Styling */
+    .logout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+      height: fit-content;
+    }
+    
+    .logout-btn:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+    }
+    
+    .logout-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    }
+    
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 20px;
+    }
+    
+    .header-content {
+      flex: 1;
+      text-align: left !important;
+    }
+    
+    .header-content h1 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a202c;
+      line-height: 1.2;
+      text-align: left !important;
+    }
+    
+    .header-content .subtitle {
+      margin: 0;
+      font-size: 16px;
+      color: #64748b;
+      line-height: 1.4;
+      text-align: left !important;
+    }
+  </style>
 </head>
 <body>
   <div class="card">
-    <h1>App Configuration</h1>
-    <div class="subtitle">Easily enable/disable features and update your app version.</div>
+    <div class="header-container">
+      <div class="header-content">
+        <h1>App Configuration</h1>
+        <div class="subtitle">Easily enable/disable features and update your app version.</div>
+      </div>
+      <button id="logoutBtn" class="logout-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Logout
+      </button>
+    </div>
     <div class="toggle-group">
       <span class="toggle-label">
         <span class="icon-wrapper">
@@ -34,6 +193,65 @@
         <span class="slider"></span>
       </label>
     </div>
+    
+    <!-- Resolution Settings Section -->
+    <div class="section-divider">
+      <h3>YouTube Quality Settings</h3>
+      <p class="section-subtitle">Configure which video resolutions are available for download</p>
+    </div>
+    
+    <div class="toggle-group resolution-toggle">
+      <span class="toggle-label">
+        <span class="icon-wrapper resolution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2" fill="#f0f7ff" stroke="#6b8aff" stroke-width="2"/><circle cx="8" cy="12" r="1.5" fill="#6b8aff"/><circle cx="12" cy="12" r="1.5" fill="#6b8aff"/><circle cx="16" cy="12" r="1.5" fill="#6b8aff"/></svg>
+        </span>
+        <span class="resolution-quality">360p Quality</span>
+        <span class="resolution-desc">Basic quality</span>
+      </span>
+      <label class="switch resolution-switch">
+        <input type="checkbox" id="resolution360pToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-group resolution-toggle">
+      <span class="toggle-label">
+        <span class="icon-wrapper resolution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2" fill="#f0f7ff" stroke="#6b8aff" stroke-width="2"/><rect x="6" y="9" width="3" height="6" rx="1" fill="#6b8aff"/><rect x="10.5" y="9" width="3" height="6" rx="1" fill="#6b8aff"/><rect x="15" y="9" width="3" height="6" rx="1" fill="#6b8aff"/></svg>
+        </span>
+        <span class="resolution-quality">480p Quality</span>
+        <span class="resolution-desc">Standard quality</span>
+      </span>
+      <label class="switch resolution-switch">
+        <input type="checkbox" id="resolution480pToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-group resolution-toggle">
+      <span class="toggle-label">
+        <span class="icon-wrapper resolution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2" fill="#f0f7ff" stroke="#6b8aff" stroke-width="2"/><rect x="4" y="8" width="2" height="8" rx="0.5" fill="#6b8aff"/><rect x="7" y="8" width="2" height="8" rx="0.5" fill="#6b8aff"/><rect x="10" y="8" width="2" height="8" rx="0.5" fill="#6b8aff"/><rect x="13" y="8" width="2" height="8" rx="0.5" fill="#6b8aff"/><rect x="16" y="8" width="2" height="8" rx="0.5" fill="#6b8aff"/><rect x="19" y="8" width="2" height="8" rx="0.5" fill="#6b8aff"/></svg>
+        </span>
+        <span class="resolution-quality">720p Quality</span>
+        <span class="resolution-desc">High quality</span>
+      </span>
+      <label class="switch resolution-switch">
+        <input type="checkbox" id="resolution720pToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-group resolution-toggle">
+      <span class="toggle-label">
+        <span class="icon-wrapper resolution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" fill="#f0f7ff" stroke="#6b8aff" stroke-width="2"/><rect x="4" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><rect x="6" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><rect x="8" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><rect x="10" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><rect x="12" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><rect x="14" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><rect x="16" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><rect x="18" y="7" width="1.5" height="10" rx="0.3" fill="#6b8aff"/><circle cx="19" cy="8" r="1" fill="#e0f2fe" stroke="#6b8aff" stroke-width="0.5"/></svg>
+        </span>
+        <span class="resolution-quality">1080p Quality</span>
+        <span class="resolution-desc">Premium quality</span>
+      </span>
+      <label class="switch resolution-switch">
+        <input type="checkbox" id="resolution1080pToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
     <div class="toggle-group version-row">
       <span class="toggle-label">
         <span class="icon-wrapper">
@@ -49,6 +267,7 @@
   </div>
   <script>
     let currentVersion = '';
+    
     function updateSaveButtonState() {
       const input = document.getElementById('appVersionInput');
       const btn = document.getElementById('saveVersionBtn');
@@ -69,6 +288,13 @@
         console.log('Fetching config from /api/app-config...');
         const res = await fetch('/api/app-config');
         console.log('Response status:', res.status);
+        
+        if (res.status === 401) {
+          // Not authenticated, redirect to login
+          window.location.href = '/admin/login';
+          return;
+        }
+        
         const data = await res.json();
         console.log('Config data received:', data);
         
@@ -76,10 +302,20 @@
         document.getElementById('imageGenToggle').checked = data.isImageGeneratorFeatureActive;
         document.getElementById('appVersionInput').value = data.version || '';
         currentVersion = data.version || '';
+        
+        // Update individual resolution toggles (convert array to boolean for UI)
+        const resolutions = data.youtubeResolutions || [];
+        document.getElementById('resolution360pToggle').checked = resolutions.includes('360p');
+        document.getElementById('resolution480pToggle').checked = resolutions.includes('480p');
+        document.getElementById('resolution720pToggle').checked = resolutions.includes('720p');
+        document.getElementById('resolution1080pToggle').checked = resolutions.includes('1080p');
+        
         updateSaveButtonState();
         console.log('Config loaded successfully');
       } catch (error) {
         console.error('Error fetching config:', error);
+        // Redirect to login on error
+        window.location.href = '/admin/login';
       }
     }
 
@@ -103,7 +339,13 @@
         console.log('Updating config, sendVersion:', sendVersion);
         const body = {
           isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
-          isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked
+          isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked,
+          youtubeResolutions: {
+            '360p': document.getElementById('resolution360pToggle').checked,
+            '480p': document.getElementById('resolution480pToggle').checked,
+            '720p': document.getElementById('resolution720pToggle').checked,
+            '1080p': document.getElementById('resolution1080pToggle').checked
+          }
         };
         if (sendVersion) {
           body.version = document.getElementById('appVersionInput').value.trim() || currentVersion;
@@ -115,6 +357,12 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
+        
+        if (response.status === 401) {
+          // Not authenticated, redirect to login
+          window.location.href = '/admin/login';
+          return;
+        }
         
         console.log('Update response status:', response.status);
         const result = await response.json();
@@ -133,8 +381,23 @@
 
     document.getElementById('downloaderToggle').addEventListener('change', () => updateConfig(false));
     document.getElementById('imageGenToggle').addEventListener('change', () => updateConfig(false));
+    document.getElementById('resolution360pToggle').addEventListener('change', () => updateConfig(false));
+    document.getElementById('resolution480pToggle').addEventListener('change', () => updateConfig(false));
+    document.getElementById('resolution720pToggle').addEventListener('change', () => updateConfig(false));
+    document.getElementById('resolution1080pToggle').addEventListener('change', () => updateConfig(false));
     document.getElementById('saveVersionBtn').addEventListener('click', () => updateConfig(true));
     document.getElementById('appVersionInput').addEventListener('input', updateSaveButtonState);
+    
+    // Logout functionality
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await fetch('/admin/logout', { method: 'POST' });
+        window.location.href = '/admin/login';
+      } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/admin/login';
+      }
+    });
     
     // Wait for DOM to be ready, then fetch config
     document.addEventListener('DOMContentLoaded', function() {
