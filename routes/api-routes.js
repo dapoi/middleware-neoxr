@@ -136,3 +136,5 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
   res.json({ success: true, ...newConfig });
 });
+
+module.exports = router;
