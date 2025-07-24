@@ -11,6 +11,9 @@ const { login } = require('./utils/auth-middleware');
 dotenv.config();
 
 const app = express();
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // Safer: trusts only the first proxy
+}
 app.use(express.json());
 
 // Session configuration
