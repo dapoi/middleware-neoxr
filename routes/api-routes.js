@@ -100,11 +100,22 @@ router.get('/app-config', (_req, res) => {
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
+    isApiConfigAccessActive: true,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"]
   };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch (e) {}
+  
+  // Check if API config access is disabled
+  if (config.isApiConfigAccessActive === false) {
+    return res.status(503).json({ 
+      error: '🚫 API App Config access is currently disabled',
+      code: 'CONFIG_ACCESS_DISABLED',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   res.json(config);
 });
 
@@ -115,6 +126,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
+    isApiConfigAccessActive: true,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"]
   };
   try {
@@ -147,6 +159,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     version: req.body.version !== undefined ? req.body.version : currentConfig.version,
     isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
     isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
+    isApiConfigAccessActive: req.body.isApiConfigAccessActive !== undefined ? !!req.body.isApiConfigAccessActive : currentConfig.isApiConfigAccessActive,
     youtubeResolutions
   };
   
