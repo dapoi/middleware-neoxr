@@ -44,15 +44,15 @@ app.use(helmet({
 // General rate limiter for all endpoints
 const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 menit
-  max: 100,
+  max: 200, // Lebih conservative: 200 requests per menit
   message: '❌ Too many requests, please try again later.',
 });
 
 // Specific rate limiter for download endpoints with burst allowance
 const downloadLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 menit
-  max: 15, // Total 15 per menit
-  message: '❌ Download limit exceeded. Maximum 15 downloads per minute. Please try again later.',
+  max: 30, // Lebih conservative: 30 per menit
+  message: '❌ Download limit exceeded. Maximum 30 downloads per minute. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   // Skip failed requests (don't count them)
@@ -61,10 +61,10 @@ const downloadLimiter = rateLimit({
   skipSuccessfulRequests: false,
 });
 
-// Burst protection - max 5 consecutive requests, then 20 second cooldown
+// Burst protection - max 10 consecutive requests, then 20 second cooldown
 const burstLimiter = rateLimit({
   windowMs: 20 * 1000, // 20 detik window
-  max: 5, // Maksimal 5 request dalam 20 detik
+  max: 10, // Lebih conservative: 10 request dalam 20 detik
   message: '❌ Too many consecutive downloads. Please wait 20 seconds before downloading again.',
   standardHeaders: true,
   legacyHeaders: false,
