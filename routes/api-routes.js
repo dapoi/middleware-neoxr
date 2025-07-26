@@ -15,9 +15,21 @@ router.get('/', (req, res) => {
       tiktok: '/api/tiktok?url=<video_url>',
       twitter: '/api/twitter?url=<tweet_url>',
       youtube: '/api/youtube?url=<video_url>&quality=<quality>',
-      meta: '/api/meta?q=<query>'
+      meta: '/api/meta?q=<query>',
+      debug: '/api/debug (shows environment info)'
     },
     author: 'https://github.com/dapoi',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Debug endpoint to check environment variables
+router.get('/debug', (req, res) => {
+  res.json({
+    environment: process.env.NODE_ENV || 'development',
+    api_key_configured: !!process.env.API_KEY,
+    api_key_length: process.env.API_KEY ? process.env.API_KEY.length : 0,
+    base_url: 'https://api.neoxr.my.id/api',
     timestamp: new Date().toISOString()
   });
 });
