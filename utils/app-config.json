@@ -2,7 +2,6 @@
   "version": "1.0.0",
   "isDownloaderFeatureActive": true,
   "isImageGeneratorFeatureActive": true,
-  "isApiConfigAccessActive": false,
   "youtubeResolutions": [
     "360p",
     "480p",

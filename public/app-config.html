@@ -194,19 +194,6 @@
       </label>
     </div>
     
-    <div class="toggle-group">
-      <span class="toggle-label">
-        <span class="icon-wrapper">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#eaf3ff" stroke="#4f8cff" stroke-width="2"/><path d="M8 12l2 2 4-4" stroke="#4f8cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-        API App Config Access
-      </span>
-      <label class="switch">
-        <input type="checkbox" id="apiConfigToggle">
-        <span class="slider"></span>
-      </label>
-    </div>
-    
     <!-- Resolution Settings Section -->
     <div class="section-divider">
       <h3>YouTube Quality Settings</h3>
@@ -320,7 +307,6 @@
         
         document.getElementById('downloaderToggle').checked = data.isDownloaderFeatureActive;
         document.getElementById('imageGenToggle').checked = data.isImageGeneratorFeatureActive;
-        document.getElementById('apiConfigToggle').checked = data.isApiConfigAccessActive !== false; // default to true if not set
         document.getElementById('appVersionInput').value = data.version || '';
         currentVersion = data.version || '';
         
@@ -361,7 +347,6 @@
         const body = {
           isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
           isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked,
-          isApiConfigAccessActive: document.getElementById('apiConfigToggle').checked,
           youtubeResolutions: {
             '360p': document.getElementById('resolution360pToggle').checked,
             '480p': document.getElementById('resolution480pToggle').checked,
@@ -403,7 +388,6 @@
 
     document.getElementById('downloaderToggle').addEventListener('change', () => updateConfig(false));
     document.getElementById('imageGenToggle').addEventListener('change', () => updateConfig(false));
-    document.getElementById('apiConfigToggle').addEventListener('change', () => updateConfig(false));
     document.getElementById('resolution360pToggle').addEventListener('change', () => updateConfig(false));
     document.getElementById('resolution480pToggle').addEventListener('change', () => updateConfig(false));
     document.getElementById('resolution720pToggle').addEventListener('change', () => updateConfig(false));
