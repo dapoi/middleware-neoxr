@@ -19,7 +19,7 @@ router.get('/license', (req, res) => {
 });
 
 // Serve app config page - Protected
-router.get('/app-config.html', requireAuth, (req, res) => {
+router.get('/app-config.html', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'app-config.html'));
 });
 
