@@ -41,13 +41,37 @@ app.use(helmet({
   }
 }));
 
-const limiter = rateLimit({
+// General rate limiter for all endpoints
+const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 menit
   max: 100,
   message: '❌ Too many requests, please try again later.',
 });
 
-app.use(limiter);
+// Specific rate limiter for download endpoints with burst allowance
+const downloadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 menit
+  max: 15, // Total 15 per menit
+  message: '❌ Download limit exceeded. Maximum 15 downloads per minute. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip failed requests (don't count them)
+  skipFailedRequests: true,
+  // Skip successful requests (count all requests)
+  skipSuccessfulRequests: false,
+});
+
+// Burst protection - max 5 consecutive requests, then 20 second cooldown
+const burstLimiter = rateLimit({
+  windowMs: 20 * 1000, // 20 detik window
+  max: 5, // Maksimal 5 request dalam 20 detik
+  message: '❌ Too many consecutive downloads. Please wait 20 seconds before downloading again.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipFailedRequests: true,
+});
+
+app.use(generalLimiter);
 
 // Serve static files from public
 app.use(express.static(path.join(__dirname, 'public')));
@@ -91,8 +115,23 @@ app.post('/admin/logout', (req, res) => {
 // Page routes
 app.use('/', pageRoutes);
 
-// API routes under /api
-app.use('/api', apiRoutes);
+// API routes under /api with download rate limiting for specific endpoints
+app.use('/api', (req, res, next) => {
+  // Apply download rate limiter to download endpoints
+  const downloadEndpoints = ['/fb', '/ig', '/tiktok', '/twitter', '/youtube'];
+  const isDownloadEndpoint = downloadEndpoints.some(endpoint => req.path.startsWith(endpoint));
+  
+  if (isDownloadEndpoint) {
+    // Apply burst limiter first (5 requests per 20 seconds)
+    burstLimiter(req, res, (err) => {
+      if (err) return next(err);
+      // Then apply download limiter (15 requests per minute)
+      downloadLimiter(req, res, next);
+    });
+  } else {
+    next();
+  }
+}, apiRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
