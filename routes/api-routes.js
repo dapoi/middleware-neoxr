@@ -115,7 +115,9 @@ router.get('/app-config', (_req, res) => {
   };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Could not read config file, using default config:', e.message);
+  }
   
   res.json(config);
 });
@@ -131,7 +133,9 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
   };
   try {
     currentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Could not read current config file, using default config:', e.message);
+  }
 
   // Always convert youtubeResolutions to array format for storage
   let youtubeResolutions = [];
