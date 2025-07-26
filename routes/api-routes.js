@@ -30,6 +30,8 @@ router.get('/debug', (req, res) => {
     api_key_configured: !!process.env.API_KEY,
     api_key_length: process.env.API_KEY ? process.env.API_KEY.length : 0,
     base_url: 'https://api.neoxr.my.id/api',
+    network_config: 'IPv4 forced for outbound requests',
+    server_ip_family: 'IPv4 (0.0.0.0)',
     timestamp: new Date().toISOString()
   });
 });

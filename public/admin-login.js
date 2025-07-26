@@ -29,9 +29,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       buttonText.innerHTML = '✓ Success!';
       btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
       
-      // Redirect to config page after short delay
+      // Check for redirect parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectUrl = urlParams.get('redirect') || '/app-config.html';
+      
+      // Redirect to appropriate page after short delay
       setTimeout(() => {
-        window.location.href = '/app-config.html';
+        window.location.href = redirectUrl;
       }, 800);
     } else {
       // Show error with icon

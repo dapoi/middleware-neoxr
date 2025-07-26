@@ -19,6 +19,9 @@ Error "Gagal ambil data dari Neoxr" hanya terjadi di deployment zeabur.app, seda
    - Environment variable `API_KEY` tidak ter-set di zeabur.app
    - Firewall/network restrictions di zeabur.app mengblokir akses ke `api.neoxr.my.id`
    - Dependency `node-fetch` tidak ter-install dengan benar
+   - Network timeout - API provider lambat merespons
+   - Rate limiting dari API provider (flood protection)
+   - Penggunaan domain yang salah (harus api.neoxr.my.id sesuai ToS)
 
 ## Solusi yang harus dicoba:
 
@@ -33,12 +36,19 @@ NODE_ENV=production
 Update `utils/forward-request.js` dengan timeout:
 ```javascript
 const response = await fetch(url, {
-  timeout: 10000, // 10 seconds timeout
+  timeout: 30000, // 30 seconds timeout (sudah diterapkan)
   headers: {
     'User-Agent': 'Mozilla/5.0 (compatible; NeoxrProxy/1.0)'
   }
 });
 ```
+
+### 3. Retry mechanism untuk handle timeout
+Sistem retry otomatis sudah ditambahkan:
+- Maximum 2 attempts untuk request yang timeout
+- Delay 2 detik antar retry
+- Smart retry hanya untuk error yang recoverable (timeout, connection reset)
+- HTTP 404/401/403 tidak di-retry karena permanent error
 
 ### 3. Test koneksi langsung
 Test akses ke `https://mever.zeabur.app/api/debug` untuk memastikan:
