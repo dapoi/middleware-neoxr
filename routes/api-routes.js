@@ -15,6 +15,7 @@ router.get('/', (req, res) => {
       tiktok: '/api/tiktok?url=<video_url>',
       twitter: '/api/twitter?url=<tweet_url>',
       youtube: '/api/youtube?url=<video_url>&quality=<quality>',
+      pinterest: '/api/pin-v2?url=<pinterest_url>',
       meta: '/api/meta?q=<query>',
       debug: '/api/debug (shows environment info)'
     },
@@ -78,6 +79,14 @@ router.get('/youtube', async (req, res) => {
     quality: req.query.quality,
     type: req.query.type || 'video'
   });
+});
+
+router.get('/pin-v2', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ URL tidak valid' });
+  }
+  await forwardRequest(res, 'pin-v2', { url });
 });
 
 router.get('/meta', async (req, res) => {
