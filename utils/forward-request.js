@@ -1,9 +1,17 @@
 const fetch = require('node-fetch');
 const { Agent } = require('http');
+const { Agent: HttpsAgent } = require('https');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Create HTTP agent yang force IPv4
+// Create HTTPS agent yang force IPv4 untuk HTTPS URLs
+const httpsAgent = new HttpsAgent({
+  family: 4, // Force IPv4
+  keepAlive: true,
+  maxSockets: 10
+});
+
+// Create HTTP agent untuk HTTP URLs (fallback)
 const httpAgent = new Agent({
   family: 4, // Force IPv4
   keepAlive: true,
@@ -26,7 +34,7 @@ const forwardRequest = async (res, endpoint, query) => {
   const now = new Date().toISOString();
   console.log(`[${now}] [REQUEST] ${endpoint} → ${url}`);
   console.log(`[${now}] [API_KEY] ${API_KEY ? 'Available' : 'Missing'}`);
-  console.log(`[${now}] [NETWORK] Using IPv4 agent for outbound requests`);
+  console.log(`[${now}] [NETWORK] Using IPv4 HTTPS agent for outbound requests`);
 
   // Retry logic dengan maximum 2 attempts
   const maxRetries = 2;
@@ -45,7 +53,7 @@ const forwardRequest = async (res, endpoint, query) => {
           'Accept-Language': 'en-US,en;q=0.9'
         },
         timeout: 30000, // Naikkan timeout ke 30 detik
-        agent: httpAgent // Force IPv4
+        agent: url.startsWith('https:') ? httpsAgent : httpAgent // Use correct agent
       });
       
       // Check if response is ok
