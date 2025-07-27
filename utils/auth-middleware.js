@@ -7,26 +7,16 @@ const AUTH_CONFIG = {
   passwordHash: '$2b$10$zaPKHT2tqZwW9gIHA7Gvm.zqJeOjqvhwNxgxI0/0DjNmwdF1z/lAa'
 };
 
-// Middleware to check if user is authenticated (for API endpoints)
+// Middleware to check if user is authenticated (unified)
 function requireAuth(req, res, next) {
   if (req.session && req.session.authenticated) {
     return next();
-  } else {
-    return res.status(401).json({ 
-      error: 'Authentication required', 
-      loginUrl: '/admin/login' 
-    });
   }
-}
-
-// Middleware to check if user is authenticated (for HTML pages)
-function requireAuthPage(req, res, next) {
-  if (req.session && req.session.authenticated) {
-    return next();
-  } else {
-    // Redirect to login page for HTML requests
+  // Jika akses HTML, redirect ke login dengan query redirect
+  if (req.originalUrl.endsWith('.html')) {
     return res.redirect('/admin/login?redirect=' + encodeURIComponent(req.originalUrl));
   }
+  res.status(401).json({ error: 'Unauthorized' });
 }
 
 // Login function
@@ -47,7 +37,6 @@ async function changePassword(newPassword) {
 
 module.exports = {
   requireAuth,
-  requireAuthPage,
   login,
   changePassword
 };

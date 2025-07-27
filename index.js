@@ -6,7 +6,7 @@ const session = require('express-session');
 const path = require('path');
 const apiRoutes = require('./routes/api-routes');
 const pageRoutes = require('./routes/page-routes');
-const { login } = require('./utils/auth-middleware');
+const { login, requireAuth } = require('./utils/auth-middleware');
 
 dotenv.config();
 
@@ -73,7 +73,9 @@ const burstLimiter = rateLimit({
 
 app.use(generalLimiter);
 
-// Serve static files from public
+// Page routes (harus sebelum static agar proteksi login berjalan)
+app.use('/', pageRoutes);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Admin login routes
@@ -116,16 +118,27 @@ app.post('/admin/logout', (req, res) => {
 app.use('/', pageRoutes);
 
 // API routes under /api with download rate limiting for specific endpoints
+// Middleware untuk melarang akses ke /api kecuali endpoint yang diizinkan
+const allowedApiEndpoints = ['/fb', '/ig', '/tiktok', '/twitter', '/youtube', '/pin-v2', '/meta', '/auth-check', '/app-config'];
+const allowedPackageNames = ['com.dapacript.mever'];
 app.use('/api', (req, res, next) => {
-  // Apply download rate limiter to download endpoints
+  // pengecualian untuk /app-config
+  if (req.path.startsWith('/app-config')) {
+    return next();
+  }
+  const packageName = req.headers['x-package-name'];
+  if (!allowedPackageNames.includes(packageName)) {
+    return res.status(403).json({ error: 'Akses hanya untuk aplikasi resmi.' });
+  }
+  if (!allowedApiEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
+    return res.status(403).json({ error: 'Akses ke endpoint ini tidak diizinkan.' });
+  }
+  // Apply download rate limiter ke endpoint download
   const downloadEndpoints = ['/fb', '/ig', '/tiktok', '/twitter', '/youtube'];
   const isDownloadEndpoint = downloadEndpoints.some(endpoint => req.path.startsWith(endpoint));
-  
   if (isDownloadEndpoint) {
-    // Apply burst limiter first (5 requests per 20 seconds)
     burstLimiter(req, res, (err) => {
       if (err) return next(err);
-      // Then apply download limiter (15 requests per minute)
       downloadLimiter(req, res, next);
     });
   } else {

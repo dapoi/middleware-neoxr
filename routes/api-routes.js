@@ -17,22 +17,8 @@ router.get('/', (req, res) => {
       youtube: '/api/youtube?url=<video_url>&quality=<quality>',
       pinterest: '/api/pin-v2?url=<pinterest_url>',
       meta: '/api/meta?q=<query>',
-      debug: '/api/debug (shows environment info)'
     },
     author: 'https://github.com/dapoi',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Debug endpoint to check environment variables
-router.get('/debug', (req, res) => {
-  res.json({
-    environment: process.env.NODE_ENV || 'development',
-    api_key_configured: !!process.env.API_KEY,
-    api_key_length: process.env.API_KEY ? process.env.API_KEY.length : 0,
-    base_url: 'https://api.neoxr.my.id/api',
-    network_config: 'IPv4 forced for HTTPS outbound requests',
-    server_ip_family: 'IPv4 (0.0.0.0)',
     timestamp: new Date().toISOString()
   });
 });
@@ -106,7 +92,9 @@ router.get('/auth-check', requireAuth, (_req, res) => {
 });
 
 // GET app config - Public endpoint
-router.get('/app-config', (_req, res) => {
+const allowedPackageNames = ['com.dapacript.mever'];
+// Endpoint ini sekarang public, tidak ada proteksi header atau session
+router.get('/app-config', (req, res) => {
   let config = { 
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
@@ -118,7 +106,6 @@ router.get('/app-config', (_req, res) => {
   } catch (e) {
     console.warn('Could not read config file, using default config:', e.message);
   }
-  
   res.json(config);
 });
 
