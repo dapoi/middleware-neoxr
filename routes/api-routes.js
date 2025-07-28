@@ -26,7 +26,7 @@ router.get('/', (req, res) => {
 router.get('/fb', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ URL tidak valid' });
+    return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'fb', { url });
 });
@@ -34,7 +34,7 @@ router.get('/fb', async (req, res) => {
 router.get('/ig', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ URL tidak valid' });
+    return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'ig', { url });
 });
@@ -42,7 +42,7 @@ router.get('/ig', async (req, res) => {
 router.get('/tiktok', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ URL tidak valid' });
+    return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'tiktok', { url });
 });
@@ -50,7 +50,7 @@ router.get('/tiktok', async (req, res) => {
 router.get('/twitter', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ URL tidak valid' });
+    return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'twitter', { url });
 });
@@ -58,7 +58,7 @@ router.get('/twitter', async (req, res) => {
 router.get('/youtube', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ URL tidak valid' });
+    return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'youtube', {
     url,
@@ -70,14 +70,14 @@ router.get('/youtube', async (req, res) => {
 router.get('/pin-v2', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ URL tidak valid' });
+    return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'pin-v2', { url });
 });
 
 router.get('/meta', async (req, res) => {
   const q = req.query.q;
-  if (!q) return res.status(400).json({ error: '❌ Query tidak valid' });
+  if (!q) return res.status(400).json({ error: '❌ Invalid query' });
 
   await forwardRequest(res, 'meta', {
     q,
@@ -93,7 +93,7 @@ router.get('/auth-check', requireAuth, (_req, res) => {
 
 // GET app config - Public endpoint
 const allowedPackageNames = ['com.dapacript.mever'];
-// Endpoint ini sekarang public, tidak ada proteksi header atau session
+// This endpoint is now public, no header or session protection
 router.get('/app-config', (req, res) => {
   let config = { 
     version: '1.0.0', 

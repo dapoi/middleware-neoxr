@@ -1,10 +1,10 @@
 const bcrypt = require('bcryptjs');
 
-// Simple in-memory auth config - in production, use environment variables
+// Simple in-memory auth config - use environment variables in production
 const AUTH_CONFIG = {
   username: 'admin',
-  // Password: 'luthfi13' (hashed)
-  passwordHash: '$2b$10$zaPKHT2tqZwW9gIHA7Gvm.zqJeOjqvhwNxgxI0/0DjNmwdF1z/lAa'
+  // Password: 'luthfi22' (hashed)
+  passwordHash: '$2b$10$80bkwSxJ2PnBYOnMHwQePOS4Htwgal7MZaOzWbm7B1wotDVm4rqvq'
 };
 
 // Middleware to check if user is authenticated (unified)
@@ -12,7 +12,7 @@ function requireAuth(req, res, next) {
   if (req.session && req.session.authenticated) {
     return next();
   }
-  // Jika akses HTML, redirect ke login dengan query redirect
+  // If accessing HTML, redirect to login with redirect query
   if (req.originalUrl.endsWith('.html')) {
     return res.redirect('/admin/login?redirect=' + encodeURIComponent(req.originalUrl));
   }

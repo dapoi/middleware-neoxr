@@ -4,14 +4,14 @@ const { Agent: HttpsAgent } = require('https');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Create HTTPS agent yang force IPv4 untuk HTTPS URLs
+// Create HTTPS agent that forces IPv4 for HTTPS URLs
 const httpsAgent = new HttpsAgent({
   family: 4, // Force IPv4
   keepAlive: true,
   maxSockets: 10
 });
 
-// Create HTTP agent untuk HTTP URLs (fallback)
+// Create HTTP agent for HTTP URLs (fallback)
 const httpAgent = new Agent({
   family: 4, // Force IPv4
   keepAlive: true,
@@ -36,7 +36,7 @@ const forwardRequest = async (res, endpoint, query) => {
   console.log(`[${now}] [API_KEY] ${API_KEY ? 'Available' : 'Missing'}`);
   console.log(`[${now}] [NETWORK] Using IPv4 HTTPS agent for outbound requests`);
 
-  // Retry logic dengan maximum 2 attempts
+  // Retry logic with maximum 2 attempts
   const maxRetries = 2;
   let lastError;
 
@@ -60,16 +60,15 @@ const forwardRequest = async (res, endpoint, query) => {
       if (!response.ok) {
         console.error(`[${now}] [HTTP_ERROR] ${endpoint} ✗ Status: ${response.status} ${response.statusText}`);
         
-        // Jika HTTP error, jangan retry untuk status code tertentu
+        // For certain HTTP errors, do not retry for these status codes
         if (response.status === 404 || response.status === 401 || response.status === 403) {
           return res.status(500).json({ 
-            error: 'Gagal ambil data dari Neoxr',
-            details: `HTTP ${response.status}: ${response.statusText}`,
-            url: BASE_URL // Don't expose full URL with API key
+            error: 'Failed to fetch data',
+            details: `HTTP ${response.status}: ${response.statusText}`
           });
         }
         
-        // Untuk status code lain, coba retry
+        // For other status codes, try to retry
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -79,7 +78,7 @@ const forwardRequest = async (res, endpoint, query) => {
         const text = await response.text();
         console.error(`[${now}] [RESPONSE_TEXT] ${text.substring(0, 200)}...`);
         return res.status(500).json({ 
-          error: 'Gagal ambil data dari Neoxr',
+          error: 'Failed to fetch data',
           details: 'Invalid response format from API'
         });
       }
@@ -96,20 +95,20 @@ const forwardRequest = async (res, endpoint, query) => {
         type: err.type
       });
       
-      // Jika ini bukan attempt terakhir dan error bisa di-retry
+      // If this is not the last attempt and the error is retryable
       if (attempt < maxRetries && (err.code === 'ETIMEDOUT' || err.message.includes('timeout') || err.code === 'ECONNRESET')) {
         console.log(`[${now}] [RETRY] ${endpoint} → Will retry in 2 seconds...`);
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
         continue;
       }
       
-      // Jika sudah attempt terakhir atau error tidak bisa di-retry, break
+      // If this is the last attempt or the error is not retryable, break
       break;
     }
   }
   
-  // Jika sampai sini, semua attempt gagal
-  let errorMessage = 'Gagal ambil data dari Neoxr';
+  // If it reaches here, all attempts have failed
+  let errorMessage = 'Failed to fetch data';
   let errorDetails = lastError.message;
   
   // Provide more specific error messages
