@@ -22,6 +22,26 @@ const API_KEY = process.env.API_KEY;
 const BASE_URL = 'https://api.neoxr.my.id/api';
 
 const forwardRequest = async (res, endpoint, query) => {
+  // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
+  try {
+    const req = res.req;
+    let packageName = (req && req.headers && req.headers['x-package-name']) || '-';
+    const method = (req && req.method) || '-';
+    const ip = (req && (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress)) || '-';
+    const usageLog = `[{time}] {method} {endpoint} | package: {package} | ip: {ip}\n`
+      .replace('{time}', new Date().toISOString())
+      .replace('{method}', method)
+      .replace('{endpoint}', endpoint)
+      .replace('{package}', packageName)
+      .replace('{ip}', ip);
+    require('fs').appendFile(
+      require('path').join(__dirname, '../usage.log'),
+      usageLog,
+      err => { if (err && process.env.NODE_ENV !== 'production') console.error('Usage log error:', err); }
+    );
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') console.error('Usage log error:', e);
+  }
   // Check if API_KEY is available
   if (!API_KEY) {
     console.error('API_KEY is not set in environment variables');
@@ -30,11 +50,7 @@ const forwardRequest = async (res, endpoint, query) => {
 
   const queryParams = new URLSearchParams({ ...query, apikey: API_KEY }).toString();
   const url = `${BASE_URL}/${endpoint}?${queryParams}`;
-
   const now = new Date().toISOString();
-  console.log(`[${now}] [REQUEST] ${endpoint} → ${url}`);
-  console.log(`[${now}] [API_KEY] ${API_KEY ? 'Available' : 'Missing'}`);
-  console.log(`[${now}] [NETWORK] Using IPv4 HTTPS agent for outbound requests`);
 
   // Retry logic with maximum 2 attempts
   const maxRetries = 2;
@@ -42,7 +58,10 @@ const forwardRequest = async (res, endpoint, query) => {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`[${now}] [ATTEMPT] ${attempt}/${maxRetries} for ${endpoint}`);
+      // Only log attempt in non-production
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[${now}] [ATTEMPT] ${attempt}/${maxRetries} for ${endpoint}`);
+      }
       
       // Add timeout and headers for better compatibility
       const response = await fetch(url, {
@@ -84,7 +103,10 @@ const forwardRequest = async (res, endpoint, query) => {
       }
 
       const data = await response.json();
-      console.log(`[${now}] [SUCCESS] ${endpoint} ✓ (attempt ${attempt})`);
+      // Only log success in non-production
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[${now}] [SUCCESS] ${endpoint} ✓ (attempt ${attempt})`);
+      }
       return res.json(data);
       
     } catch (err) {
@@ -97,7 +119,9 @@ const forwardRequest = async (res, endpoint, query) => {
       
       // If this is not the last attempt and the error is retryable
       if (attempt < maxRetries && (err.code === 'ETIMEDOUT' || err.message.includes('timeout') || err.code === 'ECONNRESET')) {
-        console.log(`[${now}] [RETRY] ${endpoint} → Will retry in 2 seconds...`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[${now}] [RETRY] ${endpoint} → Will retry in 2 seconds...`);
+        }
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
         continue;
       }
