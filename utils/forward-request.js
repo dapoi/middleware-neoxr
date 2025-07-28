@@ -71,7 +71,7 @@ const forwardRequest = async (res, endpoint, query) => {
           'Accept': 'application/json',
           'Accept-Language': 'en-US,en;q=0.9'
         },
-        timeout: 30000, // Naikkan timeout ke 30 detik
+        timeout: 30000, // Increase timeout to 30 seconds
         agent: url.startsWith('https:') ? httpsAgent : httpAgent // Use correct agent
       });
       
