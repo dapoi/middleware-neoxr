@@ -43,15 +43,15 @@ app.use(helmet({
 
 // General rate limiter for all endpoints
 const generalLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 menit
-  max: 200, // Lebih conservative: 200 requests per menit
+  windowMs: 60 * 1000, // 1 minute
+  max: 200, // More conservative: 200 requests per minute
   message: '❌ Too many requests, please try again later.',
 });
 
 // Specific rate limiter for download endpoints with burst allowance
 const downloadLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 menit
-  max: 30, // Lebih conservative: 30 per menit
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // More conservative: 30 per minute
   message: '❌ Download limit exceeded. Maximum 30 downloads per minute. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -63,8 +63,8 @@ const downloadLimiter = rateLimit({
 
 // Burst protection - max 10 consecutive requests, then 20 second cooldown
 const burstLimiter = rateLimit({
-  windowMs: 20 * 1000, // 20 detik window
-  max: 10, // Lebih conservative: 10 request dalam 20 detik
+  windowMs: 20 * 1000, // 20 second window
+  max: 10, // More conservative: 10 requests in 20 seconds
   message: '❌ Too many consecutive downloads. Please wait 20 seconds before downloading again.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -73,7 +73,7 @@ const burstLimiter = rateLimit({
 
 app.use(generalLimiter);
 
-// Page routes (harus sebelum static agar proteksi login berjalan)
+// Page routes (must be before static to ensure login protection works)
 app.use('/', pageRoutes);
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -118,23 +118,23 @@ app.post('/admin/logout', (req, res) => {
 app.use('/', pageRoutes);
 
 // API routes under /api with download rate limiting for specific endpoints
-// Middleware untuk melarang akses ke /api kecuali endpoint yang diizinkan
-const allowedApiEndpoints = ['/fb', '/ig', '/tiktok', '/twitter', '/youtube', '/pin-v2', '/meta', '/auth-check', '/app-config'];
+// Middleware to restrict access to /api except for allowed endpoints
+const allowedApiEndpoints = ['/app-config', '/auth-check', '/fb', '/ig', '/meta', '/pin-v2', '/terabox', '/tiktok', '/twitter', '/youtube'];
 const allowedPackageNames = ['com.dapacript.mever'];
 app.use('/api', (req, res, next) => {
-  // pengecualian untuk /app-config
+  // exception for /app-config
   if (req.path.startsWith('/app-config')) {
     return next();
   }
   const packageName = req.headers['x-package-name'];
   if (!allowedPackageNames.includes(packageName)) {
-    return res.status(403).json({ error: 'Akses hanya untuk aplikasi resmi.' });
+    return res.status(403).json({ error: 'Access is only allowed for the official app.' });
   }
   if (!allowedApiEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
-    return res.status(403).json({ error: 'Akses ke endpoint ini tidak diizinkan.' });
+    return res.status(403).json({ error: 'Access to this endpoint is not allowed.' });
   }
-  // Apply download rate limiter ke endpoint download
-  const downloadEndpoints = ['/fb', '/ig', '/tiktok', '/twitter', '/youtube'];
+  // Apply download rate limiter to download endpoints
+  const downloadEndpoints = ['/fb', '/ig', '/meta', '/pin-v2', '/terabox', '/tiktok', '/twitter', '/youtube'];
   const isDownloadEndpoint = downloadEndpoints.some(endpoint => req.path.startsWith(endpoint));
   if (isDownloadEndpoint) {
     burstLimiter(req, res, (err) => {
@@ -148,5 +148,5 @@ app.use('/api', (req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server jalan di port ${PORT} (IPv4)`);
+  console.log(`🚀 Server running on port ${PORT} (IPv4)`);
 });

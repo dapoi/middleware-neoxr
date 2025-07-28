@@ -16,6 +16,7 @@ router.get('/', (req, res) => {
       twitter: '/api/twitter?url=<tweet_url>',
       youtube: '/api/youtube?url=<video_url>&quality=<quality>',
       pinterest: '/api/pin-v2?url=<pinterest_url>',
+      terabox: '/api/terabox?url=<terabox_url>',
       meta: '/api/meta?q=<query>',
     },
     author: 'https://github.com/dapoi',
@@ -37,6 +38,22 @@ router.get('/ig', async (req, res) => {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'ig', { url });
+});
+
+router.get('/pin-v2', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'pin-v2', { url });
+});
+
+router.get('/terabox', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'terabox', { url });
 });
 
 router.get('/tiktok', async (req, res) => {
@@ -65,14 +82,6 @@ router.get('/youtube', async (req, res) => {
     quality: req.query.quality,
     type: req.query.type || 'video'
   });
-});
-
-router.get('/pin-v2', async (req, res) => {
-  const url = req.query.url;
-  if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ Invalid URL' });
-  }
-  await forwardRequest(res, 'pin-v2', { url });
 });
 
 router.get('/meta', async (req, res) => {
