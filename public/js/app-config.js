@@ -41,14 +41,24 @@ async function fetchConfig() {
     document.getElementById('imageGenToggle').checked = data.isImageGeneratorFeatureActive;
     document.getElementById('appVersionInput').value = data.version || '';
     currentVersion = data.version || '';
-    
+
+    // Set day dropdown
+    const daySelect = document.getElementById('daySelect');
+    if (daySelect) {
+      if (!data.maintenanceDay || data.maintenanceDay === null) {
+        daySelect.value = 'none';
+      } else {
+        daySelect.value = data.maintenanceDay;
+      }
+    }
+
     // Update individual resolution toggles (convert array to boolean for UI)
     const resolutions = data.youtubeResolutions || [];
     document.getElementById('resolution360pToggle').checked = resolutions.includes('360p');
     document.getElementById('resolution480pToggle').checked = resolutions.includes('480p');
     document.getElementById('resolution720pToggle').checked = resolutions.includes('720p');
     document.getElementById('resolution1080pToggle').checked = resolutions.includes('1080p');
-    
+
     updateSaveButtonState();
     console.log('Config loaded successfully');
   } catch (error) {
@@ -76,6 +86,11 @@ function showToast(message) {
 async function updateConfig(sendVersion = false) {
   try {
     console.log('Updating config, sendVersion:', sendVersion);
+    const daySelect = document.getElementById('daySelect');
+    let selectedDay = null;
+    if (daySelect) {
+      selectedDay = daySelect.value === 'none' ? null : daySelect.value;
+    }
     const body = {
       isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
       isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked,
@@ -84,7 +99,8 @@ async function updateConfig(sendVersion = false) {
         '480p': document.getElementById('resolution480pToggle').checked,
         '720p': document.getElementById('resolution720pToggle').checked,
         '1080p': document.getElementById('resolution1080pToggle').checked
-      }
+      },
+      maintenanceDay: selectedDay
     };
     if (sendVersion) {
       body.version = document.getElementById('appVersionInput').value.trim() || currentVersion;
@@ -127,6 +143,10 @@ function initializeEventListeners() {
   document.getElementById('resolution1080pToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('saveVersionBtn').addEventListener('click', () => updateConfig(true));
   document.getElementById('appVersionInput').addEventListener('input', updateSaveButtonState);
+  const daySelect = document.getElementById('daySelect');
+  if (daySelect) {
+    daySelect.addEventListener('change', () => updateConfig(false));
+  }
   
   // Logout functionality
   document.getElementById('logoutBtn').addEventListener('click', async () => {

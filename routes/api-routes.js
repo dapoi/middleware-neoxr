@@ -99,7 +99,8 @@ router.get('/app-config', (req, res) => {
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
-    youtubeResolutions: ["360p", "480p", "720p", "1080p"]
+    youtubeResolutions: ["360p", "480p", "720p", "1080p"],
+    maintenanceDay: null
   };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -116,7 +117,8 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
-    youtubeResolutions: ["360p", "480p", "720p", "1080p"]
+    youtubeResolutions: ["360p", "480p", "720p", "1080p"],
+    maintenanceDay: null
   };
   try {
     currentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -150,7 +152,8 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     version: req.body.version !== undefined ? req.body.version : currentConfig.version,
     isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
     isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
-    youtubeResolutions
+    youtubeResolutions,
+    maintenanceDay: req.body.maintenanceDay !== undefined ? req.body.maintenanceDay : currentConfig.maintenanceDay
   };
   
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
