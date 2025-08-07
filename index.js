@@ -119,7 +119,7 @@ app.use('/', pageRoutes);
 
 // API routes under /api with download rate limiting for specific endpoints
 // Middleware to restrict access to /api except for allowed endpoints
-const allowedApiEndpoints = ['/app-config', '/auth-check', '/fb', '/ig', '/meta', '/pin-v2', '/terabox', '/tiktok', '/twitter', '/youtube'];
+const allowedApiEndpoints = ['/', '/app-config', '/auth-check', '/fb', '/ig', '/meta', '/pin-v2', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
 const allowedPackageNames = ['com.dapacript.mever'];
 app.use('/api', (req, res, next) => {
   // exception for /app-config
@@ -134,7 +134,7 @@ app.use('/api', (req, res, next) => {
     return res.status(403).json({ error: 'Access to this endpoint is not allowed.' });
   }
   // Apply download rate limiter to download endpoints
-  const downloadEndpoints = ['/fb', '/ig', '/meta', '/pin-v2', '/terabox', '/tiktok', '/twitter', '/youtube'];
+  const downloadEndpoints = ['/fb', '/ig', '/meta', '/pin-v2', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
   const isDownloadEndpoint = downloadEndpoints.some(endpoint => req.path.startsWith(endpoint));
   if (isDownloadEndpoint) {
     burstLimiter(req, res, (err) => {

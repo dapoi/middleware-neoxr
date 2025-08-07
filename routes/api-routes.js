@@ -12,12 +12,14 @@ router.get('/', (req, res) => {
     endpoints: {
       fb: '/api/fb?url=<video_url>',
       ig: '/api/ig?url=<video_url>',
-      tiktok: '/api/tiktok?url=<video_url>',
-      twitter: '/api/twitter?url=<tweet_url>',
-      youtube: '/api/youtube?url=<video_url>&quality=<quality>',
+      meta: '/api/meta?q=<query>',
       pinterest: '/api/pin-v2?url=<pinterest_url>',
       terabox: '/api/terabox?url=<terabox_url>',
-      meta: '/api/meta?q=<query>',
+      threads: '/api/threads?url=<threads_url>',
+      tiktok: '/api/tiktok?url=<video_url>',
+      twitter: '/api/twitter?url=<tweet_url>',
+      videy: '/api/videy?url=<videy_url>',
+      youtube: '/api/youtube?url=<video_url>&quality=<360p|480p|720p|1080p|128kbps>&type=<video|audio>',
     },
     author: 'https://github.com/dapoi',
     timestamp: new Date().toISOString()
@@ -40,6 +42,17 @@ router.get('/ig', async (req, res) => {
   await forwardRequest(res, 'ig', { url });
 });
 
+router.get('/meta', async (req, res) => {
+  const q = req.query.q;
+  if (!q) return res.status(400).json({ error: '❌ Invalid query' });
+
+  await forwardRequest(res, 'meta', {
+    q,
+    session: 'bb286368-37d4-485d-9522-fb88ee8f92b4',
+    lang: req.query.lang || 'en'
+  });
+});
+
 router.get('/pin-v2', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
@@ -54,6 +67,14 @@ router.get('/terabox', async (req, res) => {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'terabox', { url });
+});
+
+router.get('/threads', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'threads', { url });
 });
 
 router.get('/tiktok', async (req, res) => {
@@ -72,6 +93,14 @@ router.get('/twitter', async (req, res) => {
   await forwardRequest(res, 'twitter', { url });
 });
 
+router.get('/videy', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'videy', { url });
+});
+
 router.get('/youtube', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
@@ -81,17 +110,6 @@ router.get('/youtube', async (req, res) => {
     url,
     quality: req.query.quality,
     type: req.query.type || 'video'
-  });
-});
-
-router.get('/meta', async (req, res) => {
-  const q = req.query.q;
-  if (!q) return res.status(400).json({ error: '❌ Invalid query' });
-
-  await forwardRequest(res, 'meta', {
-    q,
-    session: 'bb286368-37d4-485d-9522-fb88ee8f92b4',
-    lang: req.query.lang || 'en'
   });
 });
 
