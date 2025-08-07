@@ -59,6 +59,10 @@ async function fetchConfig() {
     document.getElementById('resolution720pToggle').checked = resolutions.includes('720p');
     document.getElementById('resolution1080pToggle').checked = resolutions.includes('1080p');
 
+    // Update audio quality toggles
+    const audioQualities = data.audioQualities || [];
+    document.getElementById('audio128kbpsToggle').checked = audioQualities.includes('128kbps');
+
     updateSaveButtonState();
     console.log('Config loaded successfully');
   } catch (error) {
@@ -99,6 +103,9 @@ async function updateConfig(sendVersion = false) {
         '480p': document.getElementById('resolution480pToggle').checked,
         '720p': document.getElementById('resolution720pToggle').checked,
         '1080p': document.getElementById('resolution1080pToggle').checked
+      },
+      audioQualities: {
+        '128kbps': document.getElementById('audio128kbpsToggle').checked
       },
       maintenanceDay: selectedDay
     };
@@ -141,6 +148,7 @@ function initializeEventListeners() {
   document.getElementById('resolution480pToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution720pToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution1080pToggle').addEventListener('change', () => updateConfig(false));
+  document.getElementById('audio128kbpsToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('saveVersionBtn').addEventListener('click', () => updateConfig(true));
   document.getElementById('appVersionInput').addEventListener('input', updateSaveButtonState);
   const daySelect = document.getElementById('daySelect');

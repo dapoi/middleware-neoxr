@@ -127,6 +127,7 @@ router.get('/app-config', (req, res) => {
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
+    audioQualities: [],
     maintenanceDay: null
   };
   try {
@@ -145,6 +146,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
+    audioQualities: [],
     maintenanceDay: null
   };
   try {
@@ -174,12 +176,34 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
       : Object.keys(currentConfig.youtubeResolutions || {}).filter(key => currentConfig.youtubeResolutions[key]);
   }
 
+  // Handle audioQualities the same way as youtubeResolutions
+  let audioQualities = [];
+  
+  if (req.body.audioQualities) {
+    if (typeof req.body.audioQualities === 'object' && !Array.isArray(req.body.audioQualities)) {
+      // Convert boolean object from UI to array of enabled audio qualities
+      Object.keys(req.body.audioQualities).forEach(quality => {
+        if (req.body.audioQualities[quality] === true) {
+          audioQualities.push(quality);
+        }
+      });
+    } else if (Array.isArray(req.body.audioQualities)) {
+      audioQualities = req.body.audioQualities;
+    }
+  } else {
+    // Keep current audio qualities if not provided
+    audioQualities = Array.isArray(currentConfig.audioQualities) 
+      ? currentConfig.audioQualities 
+      : Object.keys(currentConfig.audioQualities || {}).filter(key => currentConfig.audioQualities[key]);
+  }
+
   // Build clean config object (never use spread operator with req.body)
   const newConfig = {
     version: req.body.version !== undefined ? req.body.version : currentConfig.version,
     isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
     isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
     youtubeResolutions,
+    audioQualities,
     maintenanceDay: req.body.maintenanceDay !== undefined ? req.body.maintenanceDay : currentConfig.maintenanceDay
   };
   
