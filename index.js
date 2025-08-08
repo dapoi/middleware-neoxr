@@ -14,43 +14,86 @@ dotenv.config();
 
 const app = express();
 
-// Create Redis client 
+// Create Redis client with proper error handling
 let redisClient;
 let isRedisConnected = false;
+let redisErrorLogged = false;
 
-try {
-  redisClient = redis.createClient({
-    url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
-    password: process.env.REDIS_PASSWORD || undefined,
-    database: process.env.REDIS_DB || 0,
-  });
+// Only attempt Redis connection if environment variables are properly set
+const shouldUseRedis = process.env.REDIS_HOST || process.env.NODE_ENV === 'development';
 
-  redisClient.on('error', (err) => {
-    console.warn('Redis Client Error:', err.message);
+if (shouldUseRedis) {
+  try {
+    redisClient = redis.createClient({
+      url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
+      password: process.env.REDIS_PASSWORD || undefined,
+      database: process.env.REDIS_DB || 0,
+      socket: {
+        connectTimeout: 5000, // 5 second timeout
+        lazyConnect: true,    // Don't connect immediately
+        reconnectStrategy: false, // Disable automatic reconnection
+      }
+    });
+
+    // Handle errors gracefully - only log once
+    redisClient.on('error', (err) => {
+      if (!redisErrorLogged) {
+        console.warn('⚠️  Redis connection failed:', err.message);
+        console.warn('📝 Using MemoryStore for sessions (fallback mode)');
+        redisErrorLogged = true;
+      }
+      isRedisConnected = false;
+    });
+
+    redisClient.on('connect', () => {
+      console.log('✅ Connected to Redis for session storage');
+      isRedisConnected = true;
+      redisErrorLogged = false;
+    });
+
+    redisClient.on('ready', () => {
+      console.log('✅ Redis client ready');
+      isRedisConnected = true;
+    });
+
+    redisClient.on('end', () => {
+      isRedisConnected = false;
+    });
+
+    // Attempt connection with timeout
+    const connectWithTimeout = async () => {
+      try {
+        await Promise.race([
+          redisClient.connect(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), 5000)
+          )
+        ]);
+      } catch (err) {
+        if (!redisErrorLogged) {
+          console.warn('⚠️  Redis connection failed:', err.message);
+          console.warn('📝 Using MemoryStore for sessions (fallback mode)');
+          redisErrorLogged = true;
+        }
+        redisClient = null;
+        isRedisConnected = false;
+      }
+    };
+
+    connectWithTimeout();
+  } catch (error) {
+    if (!redisErrorLogged) {
+      console.warn('⚠️  Failed to create Redis client:', error.message);
+      console.warn('📝 Using MemoryStore for sessions (fallback mode)');
+      redisErrorLogged = true;
+    }
+    redisClient = null;
     isRedisConnected = false;
-  });
-
-  redisClient.on('connect', () => {
-    console.log('✅ Connected to Redis for session storage');
-    isRedisConnected = true;
-  });
-
-  redisClient.on('ready', () => {
-    console.log('✅ Redis client ready');
-    isRedisConnected = true;
-  });
-
-  // Connect to Redis (non-blocking)
-  redisClient.connect().catch(err => {
-    console.warn('Failed to connect to Redis:', err.message);
-    console.warn('⚠️  Will use MemoryStore for sessions (not suitable for production)');
-    isRedisConnected = false;
-  });
-} catch (error) {
-  console.warn('Failed to create Redis client:', error.message);
-  console.warn('⚠️  Using MemoryStore for sessions (not suitable for production)');
+  }
+} else {
+  console.log('📝 Redis not configured - using MemoryStore for sessions');
+  console.log('💡 To use Redis in production, set REDIS_HOST environment variable');
   redisClient = null;
-  isRedisConnected = false;
 }
 
 if (process.env.NODE_ENV === 'production') {
@@ -70,23 +113,26 @@ const sessionConfig = {
   }
 };
 
-// Try to use Redis store if client exists
-if (redisClient) {
+// Configure session store
+if (redisClient && !redisErrorLogged) {
   try {
     sessionConfig.store = new RedisStore({ 
       client: redisClient,
       prefix: 'neoxr:sess:',
-      ttl: 86400 // 24 hours in seconds
+      ttl: 86400, // 24 hours in seconds
+      disableTouch: true, // Improve performance
+      disableTTL: false
     });
     console.log('✅ Redis session store configured');
   } catch (error) {
-    console.warn('Failed to create Redis store:', error.message);
-    console.warn('⚠️  Using MemoryStore for sessions (not suitable for production)');
+    console.warn('⚠️  Failed to create Redis store:', error.message);
+    console.warn('📝 Using MemoryStore for sessions (fallback mode)');
   }
+} else if (!shouldUseRedis) {
+  // Intentionally using MemoryStore
+  console.log('📝 Session store: MemoryStore (development mode)');
 } else {
-  console.warn('⚠️  Using MemoryStore for sessions (not suitable for production)');
-  console.warn('   To use Redis, ensure it\'s running and set environment variables:');
-  console.warn('   REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB');
+  console.log('📝 Session store: MemoryStore (Redis unavailable)');
 }
 
 app.use(session(sessionConfig));
