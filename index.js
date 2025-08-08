@@ -229,7 +229,7 @@ app.use('/', pageRoutes);
 // API routes under /api with download rate limiting for specific endpoints
 // Middleware to restrict access to /api except for allowed endpoints
 const allowedApiEndpoints = ['/', '/app-config', '/auth-check', '/fb', '/ig', '/meta', '/pin-v2', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
-const allowedPackageNames = ['com.dapacript.mever'];
+const allowedPackageNames = ['com.dapascript.mever'];
 app.use('/api', (req, res, next) => {
   // exception for /app-config
   if (req.path.startsWith('/app-config')) {

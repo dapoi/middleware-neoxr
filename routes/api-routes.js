@@ -119,7 +119,7 @@ router.get('/auth-check', requireAuth, (_req, res) => {
 });
 
 // GET app config - Public endpoint
-const allowedPackageNames = ['com.dapacript.mever'];
+const allowedPackageNames = ['com.dapascript.mever'];
 // This endpoint is now public, no header or session protection
 router.get('/app-config', (req, res) => {
   let config = { 
