@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const session = require('express-session');
+const { RedisStore } = require('connect-redis');
+const redis = require('redis');
 const path = require('path');
 const apiRoutes = require('./routes/api-routes');
 const pageRoutes = require('./routes/page-routes');
@@ -11,22 +13,83 @@ const { login, requireAuth } = require('./utils/auth-middleware');
 dotenv.config();
 
 const app = express();
+
+// Create Redis client 
+let redisClient;
+let isRedisConnected = false;
+
+try {
+  redisClient = redis.createClient({
+    url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
+    password: process.env.REDIS_PASSWORD || undefined,
+    database: process.env.REDIS_DB || 0,
+  });
+
+  redisClient.on('error', (err) => {
+    console.warn('Redis Client Error:', err.message);
+    isRedisConnected = false;
+  });
+
+  redisClient.on('connect', () => {
+    console.log('✅ Connected to Redis for session storage');
+    isRedisConnected = true;
+  });
+
+  redisClient.on('ready', () => {
+    console.log('✅ Redis client ready');
+    isRedisConnected = true;
+  });
+
+  // Connect to Redis (non-blocking)
+  redisClient.connect().catch(err => {
+    console.warn('Failed to connect to Redis:', err.message);
+    console.warn('⚠️  Will use MemoryStore for sessions (not suitable for production)');
+    isRedisConnected = false;
+  });
+} catch (error) {
+  console.warn('Failed to create Redis client:', error.message);
+  console.warn('⚠️  Using MemoryStore for sessions (not suitable for production)');
+  redisClient = null;
+  isRedisConnected = false;
+}
+
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1); // Safer: trusts only the first proxy
 }
 app.use(express.json());
 
 // Session configuration
-app.use(session({
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
-}));
+};
+
+// Try to use Redis store if client exists
+if (redisClient) {
+  try {
+    sessionConfig.store = new RedisStore({ 
+      client: redisClient,
+      prefix: 'neoxr:sess:',
+      ttl: 86400 // 24 hours in seconds
+    });
+    console.log('✅ Redis session store configured');
+  } catch (error) {
+    console.warn('Failed to create Redis store:', error.message);
+    console.warn('⚠️  Using MemoryStore for sessions (not suitable for production)');
+  }
+} else {
+  console.warn('⚠️  Using MemoryStore for sessions (not suitable for production)');
+  console.warn('   To use Redis, ensure it\'s running and set environment variables:');
+  console.warn('   REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB');
+}
+
+app.use(session(sessionConfig));
 
 app.use(helmet({
   contentSecurityPolicy: {
