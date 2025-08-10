@@ -21,7 +21,15 @@ const httpAgent = new Agent({
 const API_KEY = process.env.API_KEY;
 const BASE_URL = 'https://api.neoxr.my.id/api';
 
+// Simple logging config - no env needed!
+const HIDE_TIMEOUT_ERRORS = true;    // Set false if you want to see timeout details
+const SHOW_SIMPLE_LOGS = true;       // Set false to disable all logs
+
 const forwardRequest = async (res, endpoint, query) => {
+  // Get user info for logging
+  const req = res.req;
+  const userIP = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
+  const packageName = req.headers['x-package-name'] || '-';
   // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
   try {
     const req = res.req;
@@ -77,7 +85,9 @@ const forwardRequest = async (res, endpoint, query) => {
       
       // Check if response is ok
       if (!response.ok) {
-        console.error(`[${now}] [HTTP_ERROR] ${endpoint} ✗ Status: ${response.status} ${response.statusText}`);
+        if (SHOW_SIMPLE_LOGS) {
+          console.error(`[${now}] [HTTP_ERROR] ${endpoint} ✗ Status: ${response.status} ${response.statusText} | IP: ${userIP}`);
+        }
         
         // For certain HTTP errors, do not retry for these status codes
         if (response.status === 404 || response.status === 401 || response.status === 403) {
@@ -93,9 +103,9 @@ const forwardRequest = async (res, endpoint, query) => {
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        console.error(`[${now}] [CONTENT_ERROR] ${endpoint} ✗ Expected JSON, got: ${contentType}`);
-        const text = await response.text();
-        console.error(`[${now}] [RESPONSE_TEXT] ${text.substring(0, 200)}...`);
+        if (SHOW_SIMPLE_LOGS) {
+          console.error(`[${now}] [CONTENT_ERROR] ${endpoint} ✗ Expected JSON, got: ${contentType}`);
+        }
         return res.status(500).json({ 
           error: 'Failed to fetch data',
           details: 'Invalid response format from API'
@@ -103,25 +113,29 @@ const forwardRequest = async (res, endpoint, query) => {
       }
 
       const data = await response.json();
-      // Only log success in non-production
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[${now}] [SUCCESS] ${endpoint} ✓ (attempt ${attempt})`);
+      // Simple success log with user info
+      if (SHOW_SIMPLE_LOGS) {
+        // For meta endpoint, also show the query
+        if (endpoint === 'meta' && query.q) {
+          console.log(`[${now}] ${endpoint} → OK | IP: ${userIP} | Q: ${query.q}`);
+        } else {
+          console.log(`[${now}] ${endpoint} → OK | IP: ${userIP}`);
+        }
       }
       return res.json(data);
       
     } catch (err) {
       lastError = err;
-      console.error(`[${now}] [ERROR] ${endpoint} ✗ Attempt ${attempt}`, {
-        message: err.message,
-        code: err.code,
-        type: err.type
-      });
+      
+      // Simple error logging - hide timeout spam but show other errors
+      const isTimeoutError = err.code === 'ETIMEDOUT' || err.message.includes('timeout') || err.type === 'request-timeout';
+      
+      if (SHOW_SIMPLE_LOGS && (!isTimeoutError || !HIDE_TIMEOUT_ERRORS)) {
+        console.error(`[${now}] [ERROR] ${endpoint} ✗ Attempt ${attempt}: ${err.message}`);
+      }
       
       // If this is not the last attempt and the error is retryable
       if (attempt < maxRetries && (err.code === 'ETIMEDOUT' || err.message.includes('timeout') || err.code === 'ECONNRESET')) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`[${now}] [RETRY] ${endpoint} → Will retry in 2 seconds...`);
-        }
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
         continue;
       }
@@ -135,13 +149,23 @@ const forwardRequest = async (res, endpoint, query) => {
   let errorMessage = 'Failed to fetch data';
   let errorDetails = lastError.message;
   
-  // Provide more specific error messages
+  // Provide more specific error messages for the user
   if (lastError.code === 'ENOTFOUND') {
     errorDetails = 'DNS resolution failed - cannot reach Neoxr API';
   } else if (lastError.code === 'ECONNREFUSED') {
     errorDetails = 'Connection refused - Neoxr API might be down';
   } else if (lastError.code === 'ETIMEDOUT' || lastError.message.includes('timeout')) {
-    errorDetails = 'Request timeout - Neoxr API is not responding after multiple attempts';
+    errorDetails = 'Request timeout - Neoxr API is not responding';
+  }
+  
+  // Always show final failure (but keep it simple)
+  if (SHOW_SIMPLE_LOGS) {
+    // For meta endpoint, also show the query
+    if (endpoint === 'meta' && query.q) {
+      console.log(`[${now}] ${endpoint} → FAILED (${errorDetails}) | IP: ${userIP} | Q: ${query.q}`);
+    } else {
+      console.log(`[${now}] ${endpoint} → FAILED (${errorDetails}) | IP: ${userIP}`);
+    }
   }
   
   res.status(500).json({ 
