@@ -23,9 +23,10 @@ const sessionConfig = {
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+    secure: false, // Set to false for development (localhost)
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Add sameSite for better compatibility
   }
 };
 
@@ -95,10 +96,20 @@ app.post('/admin/login', async (req, res) => {
   
   try {
     const isValid = await login(username, password);
+    
     if (isValid) {
       req.session.authenticated = true;
       req.session.username = username;
-      res.json({ success: true, message: 'Login successful' });
+      
+      // Force session save
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ error: 'Session save failed' });
+        }
+        
+        res.json({ success: true, message: 'Login successful' });
+      });
     } else {
       res.status(401).json({ error: 'Invalid username or password' });
     }
@@ -116,9 +127,6 @@ app.post('/admin/logout', (req, res) => {
     res.json({ success: true, message: 'Logged out successfully' });
   });
 });
-
-// Page routes
-app.use('/', pageRoutes);
 
 // API routes under /api with download rate limiting for specific endpoints
 // Middleware to restrict access to /api except for allowed endpoints

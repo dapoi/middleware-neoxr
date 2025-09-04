@@ -19,12 +19,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password }),
+      credentials: 'same-origin' // Important for session cookies
     });
     
     const data = await response.json();
     
-    if (response.ok) {
+    if (response.ok && data.success) {
       // Show success state briefly
       buttonText.innerHTML = '✓ Success!';
       btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';

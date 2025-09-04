@@ -1,3 +1,22 @@
+function getCurrentDayName() {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+  return days[today.getDay()];
+}
+
+function updateMaintenanceDayDisplay(isEnabled, serverDay = null) {
+  const display = document.getElementById('currentDayDisplay');
+  if (isEnabled) {
+    // Use server day if available, otherwise get current day
+    const currentDay = serverDay || getCurrentDayName();
+    display.textContent = `(Today: ${currentDay})`;
+    display.classList.add('active');
+  } else {
+    display.textContent = '';
+    display.classList.remove('active');
+  }
+}
+
 let currentVersion = '';
 
 function updateSaveButtonState() {
@@ -42,15 +61,14 @@ async function fetchConfig() {
     document.getElementById('appVersionInput').value = data.version || '';
     currentVersion = data.version || '';
 
-    // Set day dropdown
-    const daySelect = document.getElementById('daySelect');
-    if (daySelect) {
-      if (!data.maintenanceDay || data.maintenanceDay === null) {
-        daySelect.value = 'none';
-      } else {
-        daySelect.value = data.maintenanceDay;
-      }
-    }
+    // Set maintenance toggle
+    const maintenanceToggle = document.getElementById('maintenanceToggle');
+    const isMaintenanceActive = data.maintenanceDay !== null && data.maintenanceDay !== undefined;
+    maintenanceToggle.checked = isMaintenanceActive;
+    
+    // Always show current day for display, regardless of stored day
+    const currentDay = data.currentMaintenanceDay || getCurrentDayName();
+    updateMaintenanceDayDisplay(isMaintenanceActive, currentDay);
 
     // Update individual resolution toggles (convert array to boolean for UI)
     const resolutions = data.youtubeResolutions || [];
@@ -90,11 +108,11 @@ function showToast(message) {
 async function updateConfig(sendVersion = false) {
   try {
     console.log('Updating config, sendVersion:', sendVersion);
-    const daySelect = document.getElementById('daySelect');
-    let selectedDay = null;
-    if (daySelect) {
-      selectedDay = daySelect.value === 'none' ? null : daySelect.value;
-    }
+    
+    // Get maintenance mode status - use current day when enabled
+    const maintenanceToggle = document.getElementById('maintenanceToggle');
+    const maintenanceDay = maintenanceToggle.checked ? getCurrentDayName() : null;
+    
     const body = {
       isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
       isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked,
@@ -107,7 +125,7 @@ async function updateConfig(sendVersion = false) {
       audioQualities: {
         '128kbps': document.getElementById('audio128kbpsToggle').checked
       },
-      maintenanceDay: selectedDay
+      maintenanceDay: maintenanceDay
     };
     if (sendVersion) {
       body.version = document.getElementById('appVersionInput').value.trim() || currentVersion;
@@ -151,10 +169,12 @@ function initializeEventListeners() {
   document.getElementById('audio128kbpsToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('saveVersionBtn').addEventListener('click', () => updateConfig(true));
   document.getElementById('appVersionInput').addEventListener('input', updateSaveButtonState);
-  const daySelect = document.getElementById('daySelect');
-  if (daySelect) {
-    daySelect.addEventListener('change', () => updateConfig(false));
-  }
+  
+  // Maintenance toggle with display update
+  document.getElementById('maintenanceToggle').addEventListener('change', (e) => {
+    updateMaintenanceDayDisplay(e.target.checked);
+    updateConfig(false);
+  });
   
   // Logout functionality
   document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -168,9 +188,27 @@ function initializeEventListeners() {
   });
 }
 
+// Auto-update day display when day changes
+function startDayChangeWatcher() {
+  let currentDay = getCurrentDayName();
+  
+  // Check every minute if day has changed
+  setInterval(() => {
+    const newDay = getCurrentDayName();
+    if (newDay !== currentDay) {
+      currentDay = newDay;
+      // Day changed! Update display if maintenance is active
+      if (document.getElementById('maintenanceToggle').checked) {
+        updateMaintenanceDayDisplay(true, newDay);
+      }
+    }
+  }, 60000); // Check every minute
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing app config...');
   initializeEventListeners();
   fetchConfig();
+  startDayChangeWatcher(); // Start watching for day changes
 });

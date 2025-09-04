@@ -1,4 +1,21 @@
-/* --- Maintenance Day Symmetry Fix --- */
+/* --- Maintenance Day Display --- */
+.maintenance-day-display {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 400;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  display: none;
+}
+
+.maintenance-day-display.active {
+  display: inline-block;
+  color: #059669;
+  background: #ecfdf5;
+}
+
 .toggle-group .toggle-label {
   min-width: 160px;
   display: flex;
@@ -6,49 +23,9 @@
   justify-content: flex-start;
   text-align: left;
 }
-.day-select-group {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: 0 !important;
-  margin-left: 0;
-}
-.day-select {
-  min-width: 140px;
-  max-width: 220px;
-  margin-left: 0;
-  padding: 6px 16px;
-  font-size: 1.05rem;
-  height: 36px;
-  line-height: 1.2;
-  color: #1a2540;
-  background: #f7faff;
-  white-space: normal;
-  text-overflow: unset;
-  overflow: visible;
-  box-sizing: border-box;
-}
 @media (max-width: 600px) {
   .toggle-group .toggle-label {
     min-width: 120px;
-  }
-  .day-select-group {
-    margin-left: 0;
-    width: 100%;
-    justify-content: flex-end;
-  }
-  .day-select {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    font-size: 1rem;
-    white-space: normal;
-    text-overflow: unset;
-    overflow: visible;
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-    box-sizing: border-box;
   }
 }
 /* Add more margin for mobile version */
@@ -61,31 +38,24 @@
     padding: 1.5rem 1rem !important;
   }
 }
-.day-select-group {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
 @media (max-width: 600px) {
   .day-version-row {
     flex-direction: column;
     align-items: stretch;
     gap: 1.1rem;
   }
-  .version-group, .day-select-group {
+  .version-group {
     width: 100%;
     flex-direction: column;
     align-items: flex-start;
     gap: 0.3rem;
     display: flex;
   }
-  .version-group label, .day-select-group label {
+  .version-group label {
     min-width: unset;
     margin-bottom: 0.1rem;
   }
-  .version-input, .day-select {
+  .version-input {
     width: 100%;
     box-sizing: border-box;
     margin-right: 0;
@@ -115,38 +85,13 @@
   margin-bottom: 0.5rem;
   flex-wrap: wrap;
 }
-.version-group, .day-select-group {
+.version-group {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-.version-group label, .day-select-group label {
+.version-group label {
   min-width: 70px;
-}
-/* Day select custom styles */
-.day-select-row {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.day-select {
-  padding: 6px 16px;
-  border-radius: 7px;
-  border: 1.5px solid #b5cfff;
-  background: #f7faff;
-  font-size: 1.05rem;
-  color: #1a2540;
-  outline: none;
-  transition: border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px #b5cfff11;
-}
-.day-select:focus {
-  border: 1.5px solid #4f8cff;
-  background: #eaf3ff;
-  box-shadow: 0 2px 8px #4f8cff22;
 }
 /* App configuration page styles */
 body {

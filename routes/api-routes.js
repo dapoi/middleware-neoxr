@@ -6,6 +6,13 @@ const fs = require('fs');
 const path = require('path');
 const configPath = path.join(__dirname, '../utils/app-config.json');
 
+// Helper function to get current day name
+function getCurrentDayName() {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+  return days[today.getDay()];
+}
+
 router.get('/', (req, res) => {
   res.json({
     message: '🚀 API nyala!',
@@ -132,6 +139,9 @@ router.get('/app-config', (req, res) => {
   };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    
+    // Always send current day for real-time display
+    config.currentMaintenanceDay = getCurrentDayName();
   } catch (e) {
     console.warn('Could not read config file, using default config:', e.message);
   }
