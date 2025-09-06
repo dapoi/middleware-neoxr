@@ -4,6 +4,9 @@ const { Agent: HttpsAgent } = require('https');
 const dotenv = require('dotenv');
 dotenv.config();
 
+// In-memory request counting (resets on server restart)
+const requestCounts = new Map();
+
 // Create HTTPS agent that forces IPv4 for HTTPS URLs
 const httpsAgent = new HttpsAgent({
   family: 4, // Force IPv4
@@ -30,18 +33,35 @@ const forwardRequest = async (res, endpoint, query) => {
   const req = res.req;
   const userIP = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
   const packageName = req.headers['x-package-name'] || '-';
+  
+  // Track request count per IP per day
+  const currentDate = new Date().toDateString();
+  const countKey = `${userIP}-${currentDate}`;
+  const currentCount = (requestCounts.get(countKey) || 0) + 1;
+  requestCounts.set(countKey, currentCount);
+  
+  // Clean up old counts (keep only current and previous day)
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayDate = yesterday.toDateString();
+  for (const [key] of requestCounts) {
+    if (!key.includes(currentDate) && !key.includes(yesterdayDate)) {
+      requestCounts.delete(key);
+    }
+  }
   // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
   try {
     const req = res.req;
     let packageName = (req && req.headers && req.headers['x-package-name']) || '-';
     const method = (req && req.method) || '-';
     const ip = (req && (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress)) || '-';
-    const usageLog = `[{time}] {method} {endpoint} | package: {package} | ip: {ip}\n`
+    const usageLog = `[{time}] {method} {endpoint} | package: {package} | ip: {ip} | count: {count}/day\n`
       .replace('{time}', new Date().toISOString())
       .replace('{method}', method)
       .replace('{endpoint}', endpoint)
       .replace('{package}', packageName)
-      .replace('{ip}', ip);
+      .replace('{ip}', ip)
+      .replace('{count}', currentCount);
     require('fs').appendFile(
       require('path').join(__dirname, '../usage.log'),
       usageLog,
@@ -86,7 +106,13 @@ const forwardRequest = async (res, endpoint, query) => {
       // Check if response is ok
       if (!response.ok) {
         if (SHOW_SIMPLE_LOGS) {
-          console.error(`[${now}] [HTTP_ERROR] ${endpoint} ✗ Status: ${response.status} ${response.statusText} | IP: ${userIP}`);
+          console.log('┌─────────────────────────────────────────');
+          console.log(`│ ${endpoint.toUpperCase()}`);
+          console.log(`│ Status: HTTP ERROR ${response.status}`);
+          console.log(`│ IP: ${userIP}`);
+          console.log(`│ Daily Requests: ${currentCount}`);
+          console.log(`│ Error: ${response.statusText}`);
+          console.log('└─────────────────────────────────────────');
         }
         
         // For certain HTTP errors, do not retry for these status codes
@@ -113,14 +139,17 @@ const forwardRequest = async (res, endpoint, query) => {
       }
 
       const data = await response.json();
-      // Simple success log with user info
+      // Beautiful box format success log
       if (SHOW_SIMPLE_LOGS) {
-        // For meta endpoint, also show the query
+        console.log('┌─────────────────────────────────────────');
+        console.log(`│ ${endpoint.toUpperCase()}`);
+        console.log('│ Status: OK');
+        console.log(`│ IP: ${userIP}`);
+        console.log(`│ Daily Requests: ${currentCount}`);
         if (endpoint === 'meta' && query.q) {
-          console.log(`[${now}] ${endpoint} → OK | IP: ${userIP} | Q: ${query.q}`);
-        } else {
-          console.log(`[${now}] ${endpoint} → OK | IP: ${userIP}`);
+          console.log(`│ Query: ${query.q}`);
         }
+        console.log('└─────────────────────────────────────────');
       }
       return res.json(data);
       
@@ -158,14 +187,18 @@ const forwardRequest = async (res, endpoint, query) => {
     errorDetails = 'Request timeout - Neoxr API is not responding';
   }
   
-  // Always show final failure (but keep it simple)
+  // Beautiful box format for final failure
   if (SHOW_SIMPLE_LOGS) {
-    // For meta endpoint, also show the query
+    console.log('┌─────────────────────────────────────────');
+    console.log(`│ ${endpoint.toUpperCase()}`);
+    console.log('│ Status: FAILED');
+    console.log(`│ IP: ${userIP}`);
+    console.log(`│ Daily Requests: ${currentCount}`);
     if (endpoint === 'meta' && query.q) {
-      console.log(`[${now}] ${endpoint} → FAILED (${errorDetails}) | IP: ${userIP} | Q: ${query.q}`);
-    } else {
-      console.log(`[${now}] ${endpoint} → FAILED (${errorDetails}) | IP: ${userIP}`);
+      console.log(`│ Query: ${query.q}`);
     }
+    console.log(`│ Error: ${errorDetails}`);
+    console.log('└─────────────────────────────────────────');
   }
   
   res.status(500).json({ 
