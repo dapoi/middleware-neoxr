@@ -55,13 +55,22 @@ const forwardRequest = async (res, endpoint, query) => {
     let packageName = (req && req.headers && req.headers['x-package-name']) || '-';
     const method = (req && req.method) || '-';
     const ip = (req && (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress)) || '-';
-    const usageLog = `[{time}] {method} {endpoint} | package: {package} | ip: {ip} | count: {count}/day\n`
+    
+    // Include query information for certain endpoints (track all goimg queries in usage.log)
+    let queryInfo = '';
+    if ((endpoint === 'meta' || endpoint === 'goimg') && query.q) {
+      queryInfo = ` | query: ${query.q}`;
+    }
+    
+    const usageLog = `[{time}] {method} {endpoint} | package: {package} | ip: {ip} | count: {count}/day{queryInfo}\n`
       .replace('{time}', new Date().toISOString())
       .replace('{method}', method)
       .replace('{endpoint}', endpoint)
       .replace('{package}', packageName)
       .replace('{ip}', ip)
-      .replace('{count}', currentCount);
+      .replace('{count}', currentCount)
+      .replace('{queryInfo}', queryInfo);
+    
     require('fs').appendFile(
       require('path').join(__dirname, '../usage.log'),
       usageLog,
@@ -76,7 +85,9 @@ const forwardRequest = async (res, endpoint, query) => {
     return res.status(500).json({ error: 'API key configuration error' });
   }
 
-  const queryParams = new URLSearchParams({ ...query, apikey: API_KEY }).toString();
+  // Filter out internal parameters before building query string
+  const { isDefaultQuery, ...apiQuery } = query;
+  const queryParams = new URLSearchParams({ ...apiQuery, apikey: API_KEY }).toString();
   const url = `${BASE_URL}/${endpoint}?${queryParams}`;
   const now = new Date().toISOString();
 
@@ -105,7 +116,7 @@ const forwardRequest = async (res, endpoint, query) => {
       
       // Check if response is ok
       if (!response.ok) {
-        if (SHOW_SIMPLE_LOGS) {
+        if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
           console.log('┌─────────────────────────────────────────');
           console.log(`│ ${endpoint.toUpperCase()}`);
           console.log(`│ Status: HTTP ERROR ${response.status}`);
@@ -139,14 +150,16 @@ const forwardRequest = async (res, endpoint, query) => {
       }
 
       const data = await response.json();
-      // Beautiful box format success log
-      if (SHOW_SIMPLE_LOGS) {
+      // Beautiful box format success log (skip for default queries)
+      if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
         console.log('┌─────────────────────────────────────────');
         console.log(`│ ${endpoint.toUpperCase()}`);
         console.log('│ Status: OK');
         console.log(`│ IP: ${userIP}`);
         console.log(`│ Daily Requests: ${currentCount}`);
         if (endpoint === 'meta' && query.q) {
+          console.log(`│ Query: ${query.q}`);
+        } else if (endpoint === 'goimg' && query.q && !query.isDefaultQuery) {
           console.log(`│ Query: ${query.q}`);
         }
         console.log('└─────────────────────────────────────────');
@@ -187,14 +200,16 @@ const forwardRequest = async (res, endpoint, query) => {
     errorDetails = 'Request timeout - Neoxr API is not responding';
   }
   
-  // Beautiful box format for final failure
-  if (SHOW_SIMPLE_LOGS) {
+  // Beautiful box format for final failure (skip for default queries)
+  if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpoint.toUpperCase()}`);
     console.log('│ Status: FAILED');
     console.log(`│ IP: ${userIP}`);
     console.log(`│ Daily Requests: ${currentCount}`);
     if (endpoint === 'meta' && query.q) {
+      console.log(`│ Query: ${query.q}`);
+    } else if (endpoint === 'goimg' && query.q && !query.isDefaultQuery) {
       console.log(`│ Query: ${query.q}`);
     }
     console.log(`│ Error: ${errorDetails}`);

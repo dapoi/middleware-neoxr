@@ -28,6 +28,7 @@ router.get('/', (req, res) => {
       twitter: '/api/twitter?url=<tweet_url>',
       videy: '/api/videy?url=<videy_url>',
       youtube: '/api/youtube?url=<video_url>&quality=<360p|480p|720p|1080p|128kbps>&type=<video|audio>',
+      goimg: '/api/goimg?q=<query>',
     },
     author: 'https://github.com/dapoi',
     timestamp: new Date().toISOString()
@@ -129,6 +130,41 @@ router.get('/youtube', async (req, res) => {
   });
 });
 
+router.get('/goimg', async (req, res) => {
+  // Check if goimg feature is enabled
+  let config = { isGoImgFeatureActive: true };
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {
+    // Use default config if file reading fails
+  }
+  
+  if (!config.isGoImgFeatureActive) {
+    return res.status(503).json({ 
+      error: '🚧 GoImg feature is currently disabled',
+      details: 'This feature has been temporarily disabled by the administrator.'
+    });
+  }
+
+  let q = req.query.q;
+  let isDefaultQuery = false;
+  
+  // Use random default query if no query provided
+  if (!q) {
+    const defaultQueries = [
+      "technology",
+      "cute animal", 
+      "wallpaper",
+      "automotive",
+      "nature"
+    ];
+    q = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
+    isDefaultQuery = true;
+  }
+
+  await forwardRequest(res, 'goimg', { q, isDefaultQuery });
+});
+
 // Check authentication status - Protected endpoint
 router.get('/auth-check', requireAuth, (_req, res) => {
   res.json({ authenticated: true });
@@ -142,6 +178,7 @@ router.get('/app-config', (req, res) => {
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
+    isGoImgFeatureActive: true,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
     audioQualities: [],
     maintenanceDay: null
@@ -164,6 +201,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     version: '1.0.0', 
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
+    isGoImgFeatureActive: true,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
     audioQualities: [],
     maintenanceDay: null
@@ -221,6 +259,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     version: req.body.version !== undefined ? req.body.version : currentConfig.version,
     isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
     isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
+    isGoImgFeatureActive: req.body.isGoImgFeatureActive !== undefined ? !!req.body.isGoImgFeatureActive : currentConfig.isGoImgFeatureActive,
     youtubeResolutions,
     audioQualities,
     maintenanceDay: req.body.maintenanceDay !== undefined ? req.body.maintenanceDay : currentConfig.maintenanceDay

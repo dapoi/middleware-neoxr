@@ -58,6 +58,7 @@ async function fetchConfig() {
     
     document.getElementById('downloaderToggle').checked = data.isDownloaderFeatureActive;
     document.getElementById('imageGenToggle').checked = data.isImageGeneratorFeatureActive;
+    document.getElementById('goImgToggle').checked = data.isGoImgFeatureActive || false;
     document.getElementById('appVersionInput').value = data.version || '';
     currentVersion = data.version || '';
 
@@ -116,6 +117,7 @@ async function updateConfig(sendVersion = false) {
     const body = {
       isDownloaderFeatureActive: document.getElementById('downloaderToggle').checked,
       isImageGeneratorFeatureActive: document.getElementById('imageGenToggle').checked,
+      isGoImgFeatureActive: document.getElementById('goImgToggle').checked,
       youtubeResolutions: {
         '360p': document.getElementById('resolution360pToggle').checked,
         '480p': document.getElementById('resolution480pToggle').checked,
@@ -162,6 +164,7 @@ async function updateConfig(sendVersion = false) {
 function initializeEventListeners() {
   document.getElementById('downloaderToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('imageGenToggle').addEventListener('change', () => updateConfig(false));
+  document.getElementById('goImgToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution360pToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution480pToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution720pToggle').addEventListener('change', () => updateConfig(false));
