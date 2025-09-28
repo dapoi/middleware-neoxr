@@ -152,11 +152,11 @@ router.get('/goimg', async (req, res) => {
   // Use random default query if no query provided
   if (!q) {
     const defaultQueries = [
-      "technology",
+      "anime",
       "cute animal", 
       "wallpaper",
-      "automotive",
-      "nature"
+      "waifu",
+      "kpop"
     ];
     q = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
     isDefaultQuery = true;
