@@ -55,8 +55,8 @@ const generalLimiter = rateLimit({
 // Specific rate limiter for download endpoints with burst allowance
 const downloadLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 30, // More conservative: 30 per minute
-  message: '❌ Download limit exceeded. Maximum 30 downloads per minute. Please try again later.',
+  max: 45, // Increased: 45 per minute (0.75 req/sec - safe from DDOS detection)
+  message: '❌ Download limit exceeded. Maximum 45 downloads per minute. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   // Skip failed requests (don't count them)
@@ -65,10 +65,10 @@ const downloadLimiter = rateLimit({
   skipSuccessfulRequests: false,
 });
 
-// Burst protection - max 10 consecutive requests, then 20 second cooldown
+// Burst protection - max 12 consecutive requests, then 20 second cooldown
 const burstLimiter = rateLimit({
   windowMs: 20 * 1000, // 20 second window
-  max: 10, // More conservative: 10 requests in 20 seconds
+  max: 12, // Increased: 12 requests in 20 seconds (0.6 req/sec average)
   message: '❌ Too many consecutive downloads. Please wait 20 seconds before downloading again.',
   standardHeaders: true,
   legacyHeaders: false,
