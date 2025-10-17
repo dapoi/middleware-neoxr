@@ -17,7 +17,9 @@ router.get('/', (req, res) => {
   res.json({
     message: '🚀 API nyala!',
     endpoints: {
+      douyin: '/api/douyin?url=<douyin_url>',
       fb: '/api/fb?url=<video_url>',
+      goimg: '/api/goimg?q=<query>',
       ig: '/api/ig?url=<video_url>',
       meta: '/api/meta?q=<query>',
       pinterest: '/api/pin-v2?url=<pinterest_url>',
@@ -29,11 +31,18 @@ router.get('/', (req, res) => {
       twitter: '/api/twitter?url=<tweet_url>',
       videy: '/api/videy?url=<videy_url>',
       youtube: '/api/youtube?url=<video_url>&quality=<360p|480p|720p|1080p|128kbps>&type=<video|audio>',
-      goimg: '/api/goimg?q=<query>',
     },
     author: 'https://github.com/dapoi',
     timestamp: new Date().toISOString()
   });
+});
+
+router.get('/douyin', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'douyin', { url });
 });
 
 router.get('/fb', async (req, res) => {
@@ -42,6 +51,41 @@ router.get('/fb', async (req, res) => {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'fb', { url });
+});
+
+router.get('/goimg', async (req, res) => {
+  // Check if goimg feature is enabled
+  let config = { isGoImgFeatureActive: true };
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {
+    // Use default config if file reading fails
+  }
+  
+  if (!config.isGoImgFeatureActive) {
+    return res.status(503).json({ 
+      error: '🚧 GoImg feature is currently disabled',
+      details: 'This feature has been temporarily disabled by the administrator.'
+    });
+  }
+
+  let q = req.query.q;
+  let isDefaultQuery = false;
+  
+  // Use random default query if no query provided
+  if (!q) {
+    const defaultQueries = [
+      "anime",
+      "cute animal", 
+      "wallpaper",
+      "waifu",
+      "kpop"
+    ];
+    q = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
+    isDefaultQuery = true;
+  }
+
+  await forwardRequest(res, 'goimg', { q, isDefaultQuery });
 });
 
 router.get('/ig', async (req, res) => {
@@ -137,41 +181,6 @@ router.get('/youtube', async (req, res) => {
     quality: req.query.quality,
     type: req.query.type || 'video'
   });
-});
-
-router.get('/goimg', async (req, res) => {
-  // Check if goimg feature is enabled
-  let config = { isGoImgFeatureActive: true };
-  try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch (e) {
-    // Use default config if file reading fails
-  }
-  
-  if (!config.isGoImgFeatureActive) {
-    return res.status(503).json({ 
-      error: '🚧 GoImg feature is currently disabled',
-      details: 'This feature has been temporarily disabled by the administrator.'
-    });
-  }
-
-  let q = req.query.q;
-  let isDefaultQuery = false;
-  
-  // Use random default query if no query provided
-  if (!q) {
-    const defaultQueries = [
-      "anime",
-      "cute animal", 
-      "wallpaper",
-      "waifu",
-      "kpop"
-    ];
-    q = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
-    isDefaultQuery = true;
-  }
-
-  await forwardRequest(res, 'goimg', { q, isDefaultQuery });
 });
 
 // Check authentication status - Protected endpoint
