@@ -17,6 +17,7 @@ router.get('/', (req, res) => {
   res.json({
     message: '🚀 API nyala!',
     endpoints: {
+      applemusic: '/api/applemusic?url=<applemusic_url>',
       douyin: '/api/douyin?url=<douyin_url>',
       fb: '/api/fb?url=<video_url>',
       goimg: '/api/goimg?q=<query>',
@@ -35,6 +36,14 @@ router.get('/', (req, res) => {
     author: 'https://github.com/dapoi',
     timestamp: new Date().toISOString()
   });
+});
+
+router.get('/applemusic', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'applemusic', { url });
 });
 
 router.get('/douyin', async (req, res) => {

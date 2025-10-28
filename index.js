@@ -130,7 +130,7 @@ app.post('/admin/logout', (req, res) => {
 
 // API routes under /api with download rate limiting for specific endpoints
 // Middleware to restrict access to /api except for allowed endpoints
-const allowedApiEndpoints = ['/', '/app-config', '/auth-check', '/douyin', '/fb', '/goimg', '/ig', '/meta', '/pin-v2', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
+const allowedApiEndpoints = ['/', '/app-config', '/applemusic', '/auth-check', '/douyin', '/fb', '/goimg', '/ig', '/meta', '/pin-v2', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
 const allowedPackageNames = ['com.dapascript.mever'];
 app.use('/api', (req, res, next) => {
   // exception for /app-config
@@ -145,7 +145,7 @@ app.use('/api', (req, res, next) => {
     return res.status(403).json({ error: 'Access to this endpoint is not allowed.' });
   }
   // Apply download rate limiter to download endpoints
-  const downloadEndpoints = ['/douyin', '/fb', '/goimg', '/ig', '/meta', '/pin-v2', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
+  const downloadEndpoints = ['/applemusic', '/douyin', '/fb', '/goimg', '/ig', '/meta', '/pin-v2', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
   const isDownloadEndpoint = downloadEndpoints.some(endpoint => req.path.startsWith(endpoint));
   if (isDownloadEndpoint) {
     burstLimiter(req, res, (err) => {
