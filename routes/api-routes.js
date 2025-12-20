@@ -24,6 +24,7 @@ router.get('/', (req, res) => {
       ig: '/api/ig?url=<video_url>',
       meta: '/api/meta?q=<query>',
       pinterest: '/api/pin-v2?url=<pinterest_url>',
+      snackvideo: '/api/snackvid?url=<snackvideo_url>',
       soundcloud: '/api/soundcloud?url=<soundcloud_url>',
       spotify: '/api/spotify?url=<spotify_url>',
       terabox: '/api/terabox?url=<terabox_url>',
@@ -122,6 +123,14 @@ router.get('/pin-v2', async (req, res) => {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'pin-v2', { url });
+});
+
+router.get('/snackvid', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'snackvid', { url });
 });
 
 router.get('/soundcloud', async (req, res) => {
