@@ -112,7 +112,7 @@ router.get('/meta', async (req, res) => {
 
   await forwardRequest(res, 'meta', {
     q,
-    session: '2afeffca-e841-453c-af09-9d2bb6ee9ae4',
+    session: '',
     lang: req.query.lang || 'en'
   });
 });
