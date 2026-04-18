@@ -1,8 +1,9 @@
 {
-  "version": "1.4.4",
+  "version": "1.7.0",
   "isDownloaderFeatureActive": true,
   "isImageGeneratorFeatureActive": true,
   "isGoImgFeatureActive": true,
+  "isForceUpdateRequired": true,
   "youtubeResolutions": [
     "360p",
     "480p",

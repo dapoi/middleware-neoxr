@@ -215,6 +215,7 @@ router.get('/app-config', (req, res) => {
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
     isGoImgFeatureActive: true,
+    isForceUpdateRequired: false,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
     audioQualities: [],
     maintenanceDay: null
@@ -238,6 +239,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
     isGoImgFeatureActive: true,
+    isForceUpdateRequired: false,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
     audioQualities: [],
     maintenanceDay: null
@@ -296,6 +298,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
     isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
     isGoImgFeatureActive: req.body.isGoImgFeatureActive !== undefined ? !!req.body.isGoImgFeatureActive : currentConfig.isGoImgFeatureActive,
+    isForceUpdateRequired: req.body.isForceUpdateRequired !== undefined ? !!req.body.isForceUpdateRequired : currentConfig.isForceUpdateRequired,
     youtubeResolutions,
     audioQualities,
     maintenanceDay: req.body.maintenanceDay !== undefined ? req.body.maintenanceDay : currentConfig.maintenanceDay
