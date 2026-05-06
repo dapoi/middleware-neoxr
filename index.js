@@ -67,9 +67,9 @@ const downloadLimiter = rateLimit({
 
 // Burst protection - max 12 consecutive requests, then 20 second cooldown
 const burstLimiter = rateLimit({
-  windowMs: 20 * 1000, // 20 second window
-  max: 12, // Increased: 12 requests in 20 seconds (0.6 req/sec average)
-  message: '❌ Too many consecutive downloads. Please wait 20 seconds before downloading again.',
+  windowMs: 10 * 1000, // 10 second window
+  max: 12, // Increased: 12 requests in 10 seconds (1.2 req/sec average)
+  message: '❌ Too many consecutive downloads. Please wait 10 seconds before downloading again.',
   standardHeaders: true,
   legacyHeaders: false,
   skipFailedRequests: true,
@@ -130,11 +130,11 @@ app.post('/admin/logout', (req, res) => {
 
 // API routes under /api with download rate limiting for specific endpoints
 // Middleware to restrict access to /api except for allowed endpoints
-const allowedApiEndpoints = ['/', '/app-config', '/applemusic', '/auth-check', '/douyin', '/fb', '/goimg', '/ig', '/meta', '/pin-v2', '/pixiv', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
+const allowedApiEndpoints = ['/', '/app-config', '/report', '/applemusic', '/auth-check', '/douyin', '/fb', '/goimg', '/ig', '/meta', '/pin-v2', '/pixiv', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
 const allowedPackageNames = ['com.dapascript.mever'];
 app.use('/api', (req, res, next) => {
-  // exception for /app-config
-  if (req.path.startsWith('/app-config')) {
+  // exception for /app-config and /report
+  if (req.path.startsWith('/app-config') || req.path.startsWith('/report')) {
     return next();
   }
   const packageName = req.headers['x-package-name'];

@@ -3,14 +3,17 @@
   "isDownloaderFeatureActive": true,
   "isImageGeneratorFeatureActive": true,
   "isGoImgFeatureActive": true,
+  "isWhatsAppStatusFeatureActive": true,
   "isForceUpdateRequired": true,
   "youtubeResolutions": [
     "360p",
     "480p",
-    "720p"
+    "720p",
+    "1080p"
   ],
   "audioQualities": [
     "128kbps"
   ],
-  "maintenanceDay": null
+  "maintenanceDay": null,
+  "reportString": ""
 }

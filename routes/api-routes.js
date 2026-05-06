@@ -215,10 +215,12 @@ router.get('/app-config', (req, res) => {
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
     isGoImgFeatureActive: true,
+    isWhatsAppStatusFeatureActive: true,
     isForceUpdateRequired: false,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
     audioQualities: [],
-    maintenanceDay: null
+    maintenanceDay: null,
+    reportString: ""
   };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -239,10 +241,12 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     isDownloaderFeatureActive: true, 
     isImageGeneratorFeatureActive: true,
     isGoImgFeatureActive: true,
+    isWhatsAppStatusFeatureActive: true,
     isForceUpdateRequired: false,
     youtubeResolutions: ["360p", "480p", "720p", "1080p"],
     audioQualities: [],
-    maintenanceDay: null
+    maintenanceDay: null,
+    reportString: ""
   };
   try {
     currentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -298,14 +302,37 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     isDownloaderFeatureActive: req.body.isDownloaderFeatureActive !== undefined ? !!req.body.isDownloaderFeatureActive : currentConfig.isDownloaderFeatureActive,
     isImageGeneratorFeatureActive: req.body.isImageGeneratorFeatureActive !== undefined ? !!req.body.isImageGeneratorFeatureActive : currentConfig.isImageGeneratorFeatureActive,
     isGoImgFeatureActive: req.body.isGoImgFeatureActive !== undefined ? !!req.body.isGoImgFeatureActive : currentConfig.isGoImgFeatureActive,
+    isWhatsAppStatusFeatureActive: req.body.isWhatsAppStatusFeatureActive !== undefined ? !!req.body.isWhatsAppStatusFeatureActive : currentConfig.isWhatsAppStatusFeatureActive,
     isForceUpdateRequired: req.body.isForceUpdateRequired !== undefined ? !!req.body.isForceUpdateRequired : currentConfig.isForceUpdateRequired,
     youtubeResolutions,
     audioQualities,
-    maintenanceDay: req.body.maintenanceDay !== undefined ? req.body.maintenanceDay : currentConfig.maintenanceDay
+    maintenanceDay: req.body.maintenanceDay !== undefined ? req.body.maintenanceDay : currentConfig.maintenanceDay,
+    reportString: req.body.reportString !== undefined ? req.body.reportString : (currentConfig.reportString || "")
   };
   
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
   res.json({ success: true, ...newConfig });
+});
+
+// POST report - Public endpoint to update reportString from app
+router.post('/report', express.json(), (req, res) => {
+  const { reportString } = req.body;
+  if (reportString === undefined) {
+    return res.status(400).json({ error: '❌ reportString is required' });
+  }
+
+  try {
+    const rawData = fs.readFileSync(configPath, 'utf8');
+    const configData = JSON.parse(rawData);
+    
+    configData.reportString = reportString;
+    
+    fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
+    res.json({ success: true, message: 'Report updated', reportString });
+  } catch (err) {
+    console.error('Error updating report string:', err);
+    res.status(500).json({ error: 'Failed to update report string' });
+  }
 });
 
 module.exports = router;
