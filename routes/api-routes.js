@@ -314,21 +314,26 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
   res.json({ success: true, ...newConfig });
 });
 
-// POST report - Public endpoint to update reportString from app
-router.post('/report', express.json(), (req, res) => {
-  const { reportString } = req.body;
-  if (reportString === undefined) {
-    return res.status(400).json({ error: '❌ reportString is required' });
+// POST report - Public endpoint to update reportString from app via Query Param
+router.post('/report', (req, res) => {
+  // Read from req.query.message to match @Query("message") in Retrofit
+  const message = req.query.message;
+  
+  if (message === undefined) {
+    return res.status(400).json({ error: '❌ message query parameter is required' });
   }
 
   try {
     const rawData = fs.readFileSync(configPath, 'utf8');
     const configData = JSON.parse(rawData);
     
-    configData.reportString = reportString;
+    // Save the incoming message into the config's reportString
+    configData.reportString = message;
     
     fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
-    res.json({ success: true, message: 'Report updated', reportString });
+    
+    // Return 204 No Content (matches Unit in Kotlin)
+    res.status(204).send();
   } catch (err) {
     console.error('Error updating report string:', err);
     res.status(500).json({ error: 'Failed to update report string' });
