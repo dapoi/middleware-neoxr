@@ -86,8 +86,9 @@ router.get('/goimg', async (req, res) => {
   if (!q) {
     const defaultQueries = [
       "anime",
-      "cute animal", 
-      "wallpaper",
+      "meme absurd",
+      "meme shitpost",
+      "my bini",
       "waifu",
       "kpop"
     ];
