@@ -22,7 +22,9 @@ const httpAgent = new Agent({
 });
 
 const API_KEY = process.env.API_KEY;
-const BASE_URL = 'https://api.neoxr.my.id/api';
+const rawBaseUrl = process.env.API_BASE_URL || 'https://api.neoxr.my.id/';
+const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+const BASE_URL = normalizedBaseUrl.endsWith('/api') ? normalizedBaseUrl : `${normalizedBaseUrl}/api`;
 
 // Simple logging config - no env needed!
 const HIDE_TIMEOUT_ERRORS = true;    // Set false if you want to see timeout details
