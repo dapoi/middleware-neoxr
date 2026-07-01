@@ -7,6 +7,41 @@ dotenv.config();
 // In-memory request counting (resets on server restart)
 const requestCounts = new Map();
 
+// In-memory response caching untuk search endpoints (goimg only)
+// Cache expires after 30 minutes - safe untuk search results yang jarang berubah
+const responseCache = new Map();
+const CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
+const CACHEABLE_ENDPOINTS = ['goimg']; // Hanya cache goimg
+
+// Helper function to generate cache key
+const generateCacheKey = (endpoint, query) => {
+  const queryStr = JSON.stringify(query).replace(/apikey=[\w]+/, '');
+  return `${endpoint}:${queryStr}`;
+};
+
+// Helper function to get cached response
+const getCachedResponse = (endpoint, cacheKey) => {
+  if (!CACHEABLE_ENDPOINTS.includes(endpoint)) return null;
+  
+  const cached = responseCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY_MS) {
+    return cached.data;
+  }
+  if (cached) responseCache.delete(cacheKey);
+  return null;
+};
+
+// Helper function to cache response
+const cacheResponse = (endpoint, cacheKey, data) => {
+  if (!CACHEABLE_ENDPOINTS.includes(endpoint)) return;
+  
+  responseCache.set(cacheKey, { data, timestamp: Date.now() });
+  if (responseCache.size > 500) {
+    const oldestKey = responseCache.keys().next().value;
+    responseCache.delete(oldestKey);
+  }
+};
+
 // Create HTTPS agent that forces IPv4 for HTTPS URLs
 const httpsAgent = new HttpsAgent({
   family: 4, // Force IPv4
@@ -92,6 +127,20 @@ const forwardRequest = async (res, endpoint, query) => {
   const queryParams = new URLSearchParams({ ...apiQuery, apikey: API_KEY }).toString();
   const url = `${BASE_URL}/${endpoint}?${queryParams}`;
   const now = new Date().toISOString();
+  
+  // Check cache first untuk search endpoints (goimg, meta)
+  const cacheKey = generateCacheKey(endpoint, query);
+  const cachedResponse = getCachedResponse(endpoint, cacheKey);
+  if (cachedResponse) {
+    if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
+      console.log('┌─────────────────────────────────────────');
+      console.log(`│ ${endpoint.toUpperCase()}`);
+      console.log('│ Status: CACHED (30 min TTL)');
+      console.log(`│ IP: ${userIP}`);
+      console.log('└─────────────────────────────────────────');
+    }
+    return res.json(cachedResponse);
+  }
 
   // Retry logic with maximum 2 attempts
   const maxRetries = 2;
@@ -110,20 +159,6 @@ const forwardRequest = async (res, endpoint, query) => {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; NeoxrProxy/1.0)',
           'Accept': 'application/json',
-          'Accept-Language': 'en-US,en;q=0.9'
-        },
-        timeout: 30000, // Increase timeout to 30 seconds
-        agent: url.startsWith('https:') ? httpsAgent : httpAgent // Use correct agent
-      });
-      
-      // Check if response is ok
-      if (!response.ok) {
-        if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
-          console.log('┌─────────────────────────────────────────');
-          console.log(`│ ${endpoint.toUpperCase()}`);
-          console.log(`│ Status: HTTP ERROR ${response.status}`);
-          console.log(`│ IP: ${userIP}`);
-          console.log(`│ Daily Requests: ${currentCount}`);
           console.log(`│ Error: ${response.statusText}`);
           console.log('└─────────────────────────────────────────');
         }
@@ -152,6 +187,9 @@ const forwardRequest = async (res, endpoint, query) => {
       }
 
       const data = await response.json();
+      // Cache response untuk search endpoints only (goimg, meta)
+      cacheResponse(endpoint, cacheKey, data);
+      
       // Beautiful box format success log (skip for default queries)
       if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
         console.log('┌─────────────────────────────────────────');
@@ -195,10 +233,7 @@ const forwardRequest = async (res, endpoint, query) => {
   
   // Provide more specific error messages for the user
   if (lastError.code === 'ENOTFOUND') {
-    errorDetails = 'DNS resolution failed - cannot reach Neoxr API';
-  } else if (lastError.code === 'ECONNREFUSED') {
-    errorDetails = 'Connection refused - Neoxr API might be down';
-  } else if (lastError.code === 'ETIMEDOUT' || lastError.message.includes('timeout')) {
+    errorif (lastError.code === 'ETIMEDOUT' || lastError.message.includes('timeout')) {
     errorDetails = 'Request timeout - Neoxr API is not responding';
   }
   
