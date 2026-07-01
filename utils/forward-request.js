@@ -7,11 +7,11 @@ dotenv.config();
 // In-memory request counting (resets on server restart)
 const requestCounts = new Map();
 
-// In-memory response caching untuk search endpoints (goimg only)
+// In-memory response caching untuk search endpoints (goimg, meta)
 // Cache expires after 30 minutes - safe untuk search results yang jarang berubah
 const responseCache = new Map();
 const CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
-const CACHEABLE_ENDPOINTS = ['goimg']; // Hanya cache goimg
+const CACHEABLE_ENDPOINTS = ['goimg', 'meta']; // Hanya cache search endpoints
 
 // Helper function to generate cache key
 const generateCacheKey = (endpoint, query) => {
@@ -159,6 +159,20 @@ const forwardRequest = async (res, endpoint, query) => {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; NeoxrProxy/1.0)',
           'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9'
+        },
+        timeout: 30000,
+        agent: url.startsWith('https:') ? httpsAgent : httpAgent
+      });
+      
+      // Check if response is ok
+      if (!response.ok) {
+        if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
+          console.log('┌─────────────────────────────────────────');
+          console.log(`│ ${endpoint.toUpperCase()}`);
+          console.log(`│ Status: HTTP ERROR ${response.status}`);
+          console.log(`│ IP: ${userIP}`);
+          console.log(`│ Daily Requests: ${currentCount}`);
           console.log(`│ Error: ${response.statusText}`);
           console.log('└─────────────────────────────────────────');
         }
@@ -233,7 +247,10 @@ const forwardRequest = async (res, endpoint, query) => {
   
   // Provide more specific error messages for the user
   if (lastError.code === 'ENOTFOUND') {
-    errorif (lastError.code === 'ETIMEDOUT' || lastError.message.includes('timeout')) {
+    errorDetails = 'DNS resolution failed - cannot reach Neoxr API';
+  } else if (lastError.code === 'ECONNREFUSED') {
+    errorDetails = 'Connection refused - Neoxr API might be down';
+  } else if (lastError.code === 'ETIMEDOUT' || lastError.message.includes('timeout')) {
     errorDetails = 'Request timeout - Neoxr API is not responding';
   }
   
