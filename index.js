@@ -45,10 +45,16 @@ app.use(helmet({
   }
 }));
 
+// Helper to get client IP reliably behind proxies
+const getClientIp = (req) => {
+  return req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
+};
+
 // General rate limiter for all endpoints
 const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 100, // Conservative: 100 requests per minute to avoid third party API blocking
+  keyGenerator: getClientIp,
   message: '❌ Too many requests, please try again later.',
 });
 
@@ -56,6 +62,7 @@ const generalLimiter = rateLimit({
 const downloadLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 60, // Conservative: 60 downloads per minute to avoid third party API blocking
+  keyGenerator: getClientIp,
   message: '❌ Download limit exceeded. Maximum 60 downloads per minute. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -69,13 +76,25 @@ const downloadLimiter = rateLimit({
 const burstLimiter = rateLimit({
   windowMs: 10 * 1000, // 10 second window
   max: 10, // Conservative: 10 requests in 10 seconds (1 req/sec) to avoid third party API blocking
+  keyGenerator: getClientIp,
   message: '❌ Too many consecutive downloads. Please wait 10 seconds before downloading again.',
   standardHeaders: true,
   legacyHeaders: false,
   skipFailedRequests: true,
 });
 
-app.use(generalLimiter);
+// Specific rate limiter for admin login to prevent brute force
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Maximum 5 attempts per minute
+  keyGenerator: getClientIp,
+  message: '❌ Terlalu banyak percobaan login. Silakan coba lagi dalam 1 menit.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipFailedRequests: false,
+});
+
+app.use('/api', generalLimiter);
 
 // Page routes (must be before static to ensure login protection works)
 app.use('/', pageRoutes);
@@ -87,7 +106,7 @@ app.get('/admin/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
-app.post('/admin/login', async (req, res) => {
+app.post('/admin/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {

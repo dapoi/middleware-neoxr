@@ -46,14 +46,14 @@ const cacheResponse = (endpoint, cacheKey, data) => {
 const httpsAgent = new HttpsAgent({
   family: 4, // Force IPv4
   keepAlive: true,
-  maxSockets: 10
+  maxSockets: 20
 });
 
 // Create HTTP agent for HTTP URLs (fallback)
 const httpAgent = new Agent({
   family: 4, // Force IPv4
   keepAlive: true,
-  maxSockets: 10
+  maxSockets: 20
 });
 
 const API_KEY = process.env.API_KEY;
