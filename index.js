@@ -53,7 +53,7 @@ const getClientIp = (req) => {
 // General rate limiter for all endpoints
 const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 100, // Conservative: 100 requests per minute to avoid third party API blocking
+  max: 50, // Conservative: 50 requests per minute to avoid third party API blocking
   keyGenerator: getClientIp,
   message: '❌ Too many requests, please try again later.',
 });
@@ -61,9 +61,9 @@ const generalLimiter = rateLimit({
 // Specific rate limiter for download endpoints with burst allowance
 const downloadLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 60, // Conservative: 60 downloads per minute to avoid third party API blocking
+  max: 30, // Conservative: 30 downloads per minute to avoid third party API blocking
   keyGenerator: getClientIp,
-  message: '❌ Download limit exceeded. Maximum 60 downloads per minute. Please try again later.',
+  message: '❌ Download limit exceeded. Maximum 30 downloads per minute. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   // Skip failed requests (don't count them)
@@ -72,10 +72,10 @@ const downloadLimiter = rateLimit({
   skipSuccessfulRequests: false,
 });
 
-// Burst protection - max 10 consecutive requests in 10 second window
+// Burst protection - max 5 consecutive requests in 10 second window
 const burstLimiter = rateLimit({
   windowMs: 10 * 1000, // 10 second window
-  max: 10, // Conservative: 10 requests in 10 seconds (1 req/sec) to avoid third party API blocking
+  max: 5, // Conservative: 5 requests in 10 seconds to avoid third party API blocking
   keyGenerator: getClientIp,
   message: '❌ Too many consecutive downloads. Please wait 10 seconds before downloading again.',
   standardHeaders: true,
