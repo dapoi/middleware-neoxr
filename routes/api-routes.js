@@ -4,7 +4,7 @@ const forwardRequest = require('../utils/forward-request');
 const { requireAuth } = require('../utils/auth-middleware');
 const fs = require('fs');
 const path = require('path');
-const configPath = path.join(__dirname, '../utils/app-config.json');
+const configPath = path.join(__dirname, '../data/app-config.json');
 
 // Helper function to get current day name
 function getCurrentDayName() {
