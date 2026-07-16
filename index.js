@@ -102,6 +102,10 @@ const loginLimiter = rateLimit({
 
 app.use('/api', generalLimiter);
 
+// Health check endpoints for Zeabur/platform health monitoring
+app.get('/health', (_req, res) => res.status(200).json({ status: 'ok' }));
+app.get('/healthz', (_req, res) => res.status(200).json({ status: 'ok' }));
+
 // Page routes (must be before static to ensure login protection works)
 app.use('/', pageRoutes);
 
