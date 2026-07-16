@@ -1,4 +1,6 @@
 {
   "build_command": "npm install --production",
-  "start_command": "node index.js"
+  "start_command": "node index.js",
+  "node_version": "20",
+  "port": 3000
 }
