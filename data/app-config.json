@@ -5,6 +5,7 @@
   "isGoImgFeatureActive": true,
   "isWhatsAppStatusFeatureActive": true,
   "isForceUpdateRequired": true,
+  "showSupportedPlatform": true,
   "youtubeResolutions": [
     "360p",
     "480p",

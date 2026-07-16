@@ -32,7 +32,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       
       // Check for redirect parameter
       const urlParams = new URLSearchParams(window.location.search);
-      const redirectUrl = urlParams.get('redirect') || '/app-config.html';
+      const redirectUrl = urlParams.get('redirect') || '/config';
       
       // Redirect to appropriate page after short delay
       setTimeout(() => {

@@ -61,6 +61,7 @@ async function fetchConfig() {
     document.getElementById('goImgToggle').checked = data.isGoImgFeatureActive || false;
     document.getElementById('whatsAppStatusToggle').checked = data.isWhatsAppStatusFeatureActive || false;
     document.getElementById('forceUpdateToggle').checked = data.isForceUpdateRequired || false;
+    document.getElementById('showSupportedPlatformToggle').checked = data.showSupportedPlatform !== undefined ? data.showSupportedPlatform : true;
     document.getElementById('appVersionInput').value = data.version || '';
     currentVersion = data.version || '';
 
@@ -122,6 +123,7 @@ async function updateConfig(sendVersion = false) {
       isGoImgFeatureActive: document.getElementById('goImgToggle').checked,
       isWhatsAppStatusFeatureActive: document.getElementById('whatsAppStatusToggle').checked,
       isForceUpdateRequired: document.getElementById('forceUpdateToggle').checked,
+      showSupportedPlatform: document.getElementById('showSupportedPlatformToggle').checked,
       youtubeResolutions: {
         '360p': document.getElementById('resolution360pToggle').checked,
         '480p': document.getElementById('resolution480pToggle').checked,
@@ -171,6 +173,7 @@ function initializeEventListeners() {
   document.getElementById('goImgToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('whatsAppStatusToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('forceUpdateToggle').addEventListener('change', () => updateConfig(false));
+  document.getElementById('showSupportedPlatformToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution360pToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution480pToggle').addEventListener('change', () => updateConfig(false));
   document.getElementById('resolution720pToggle').addEventListener('change', () => updateConfig(false));
