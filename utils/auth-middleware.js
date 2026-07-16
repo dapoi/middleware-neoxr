@@ -12,8 +12,9 @@ function requireAuth(req, res, next) {
   if (req.session && req.session.authenticated) {
     return next();
   }
-  // If accessing HTML, redirect to login with redirect query
-  if (req.originalUrl.endsWith('.html')) {
+  // If accessing a page route (HTML or clean URL), redirect to login
+  const isPageRequest = req.originalUrl.endsWith('.html') || !req.originalUrl.startsWith('/api');
+  if (isPageRequest) {
     return res.redirect('/admin/login?redirect=' + encodeURIComponent(req.originalUrl));
   }
   res.status(401).json({ error: 'Unauthorized' });

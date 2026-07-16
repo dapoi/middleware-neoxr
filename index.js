@@ -18,15 +18,21 @@ if (process.env.NODE_ENV === 'production') {
 app.use(express.json());
 
 // Session configuration
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction && !process.env.SESSION_SECRET) {
+  console.warn('⚠️  WARNING: SESSION_SECRET is not set! Using default secret, this is insecure in production.');
+}
+
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to false for development (localhost)
+    secure: isProduction, // true in production (HTTPS), false in development
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Add sameSite for better compatibility
+    sameSite: isProduction ? 'none' : 'lax' // 'none' required for cross-site cookies on Zeabur
   }
 };
 
