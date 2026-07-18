@@ -65,6 +65,17 @@ const BASE_URL = normalizedBaseUrl.endsWith('/api') ? normalizedBaseUrl : `${nor
 const HIDE_TIMEOUT_ERRORS = true;    // Set false if you want to see timeout details
 const SHOW_SIMPLE_LOGS = true;       // Set false to disable all logs
 
+// Rotate User-Agent to avoid Cloudflare bot detection
+const USER_AGENTS = [
+  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+  'Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36',
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Linux; Android 12; Redmi Note 11) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+];
+const getRandomUA = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+
 const forwardRequest = async (res, endpoint, query) => {
   // Get user info for logging
   const req = res.req;
@@ -157,9 +168,15 @@ const forwardRequest = async (res, endpoint, query) => {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; NeoxrProxy/1.0)',
-          'Accept': 'application/json',
-          'Accept-Language': 'en-US,en;q=0.9'
+          'User-Agent': getRandomUA(),
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9,id;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'cross-site',
         },
         timeout: 30000,
         agent: url.startsWith('https:') ? httpsAgent : httpAgent
