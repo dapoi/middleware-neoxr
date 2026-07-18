@@ -6,6 +6,24 @@ const fs = require('fs');
 const path = require('path');
 const configPath = path.join(__dirname, '../data/app-config.json');
 
+// In-memory config cache — avoids disk read on every splashscreen hit
+// Invalidated immediately whenever config is updated via POST
+let configCache = null;
+const invalidateConfigCache = () => { configCache = null; };
+const DEFAULT_CONFIG = {
+  version: '1.0.0',
+  isDownloaderFeatureActive: true,
+  isImageGeneratorFeatureActive: true,
+  isGoImgFeatureActive: true,
+  isWhatsAppStatusFeatureActive: true,
+  isForceUpdateRequired: false,
+  showSupportedPlatform: true,
+  youtubeResolutions: ['360p', '480p', '720p', '1080p'],
+  audioQualities: [],
+  maintenanceDay: null,
+  reportString: ''
+};
+
 // Helper function to get current day name
 function getCurrentDayName() {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -211,28 +229,25 @@ router.get('/auth-check', requireAuth, (_req, res) => {
 const allowedPackageNames = ['com.dapascript.mever'];
 // This endpoint is now public, no header or session protection
 router.get('/app-config', (req, res) => {
-  let config = { 
-    version: '1.0.0', 
-    isDownloaderFeatureActive: true, 
-    isImageGeneratorFeatureActive: true,
-    isGoImgFeatureActive: true,
-    isWhatsAppStatusFeatureActive: true,
-    isForceUpdateRequired: false,
-    showSupportedPlatform: true,
-    youtubeResolutions: ["360p", "480p", "720p", "1080p"],
-    audioQualities: [],
-    maintenanceDay: null,
-    reportString: ""
-  };
+  // Serve from in-memory cache if available (avoids disk I/O on every splashscreen hit)
+  if (configCache) {
+    res.set('Cache-Control', 'public, max-age=10');
+    return res.json({ ...configCache, currentMaintenanceDay: getCurrentDayName() });
+  }
+
+  let config = { ...DEFAULT_CONFIG };
   try {
     config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    
-    // Always send current day for real-time display
-    config.currentMaintenanceDay = getCurrentDayName();
   } catch (e) {
     console.warn('Could not read config file, using default config:', e.message);
   }
-  res.json(config);
+
+  // Populate cache for subsequent requests
+  configCache = config;
+
+  // Always send current day for real-time display
+  res.set('Cache-Control', 'public, max-age=10');
+  res.json({ ...config, currentMaintenanceDay: getCurrentDayName() });
 });
 
 // POST app config (update) - Protected endpoint
@@ -316,6 +331,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
   
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
+  invalidateConfigCache(); // force next GET to re-read from disk
   res.json({ success: true, ...newConfig });
 });
 
@@ -337,6 +353,7 @@ router.post('/report', (req, res) => {
     
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
+    invalidateConfigCache(); // force next GET to re-read from disk
     
     // Return 204 No Content (matches Unit in Kotlin)
     res.status(204).send();
