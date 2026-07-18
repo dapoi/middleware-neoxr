@@ -314,6 +314,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     reportString: req.body.reportString !== undefined ? req.body.reportString : (currentConfig.reportString || "")
   };
   
+  fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
   res.json({ success: true, ...newConfig });
 });
@@ -334,6 +335,7 @@ router.post('/report', (req, res) => {
     // Save the incoming message into the config's reportString
     configData.reportString = message;
     
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
     
     // Return 204 No Content (matches Unit in Kotlin)
