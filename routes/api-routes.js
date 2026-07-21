@@ -129,11 +129,59 @@ router.get('/meta', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.status(400).json({ error: '❌ Invalid query' });
 
-  await forwardRequest(res, 'meta', {
-    q,
-    session: '',
-    lang: req.query.lang || 'en'
-  });
+  const apiKey = process.env.API_KEY;
+  const bardUrl = `https://api.neoxr.eu/api/bardimg?q=${encodeURIComponent(q)}&apikey=${apiKey}`;
+  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+
+  try {
+    const fetch = require('node-fetch');
+    const bardRes = await fetch(bardUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      timeout: 15000
+    });
+
+    if (!bardRes.ok) {
+      throw new Error(`Bard API returned HTTP ${bardRes.status}`);
+    }
+
+    const contentType = bardRes.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Bard API returned non-JSON response');
+    }
+
+    const bardData = await bardRes.json();
+
+    // Map Bard response to Android ImageAiResponse format:
+    // { data: { media: [{ url: "..." }] } }
+    const mapped = {
+      data: {
+        media: bardData.data?.url ? [{ url: bardData.data.url }] : []
+      }
+    };
+
+    console.log('┌─────────────────────────────────────────');
+    console.log('│ META (BARD)');
+    console.log('│ Status: OK');
+    console.log(`│ IP: ${ip}`);
+    console.log(`│ Query: ${q}`);
+    console.log('└─────────────────────────────────────────');
+
+    return res.json(mapped);
+  } catch (err) {
+    console.log('┌─────────────────────────────────────────');
+    console.log('│ META (BARD)');
+    console.log('│ Status: FAILED');
+    console.log(`│ IP: ${ip}`);
+    console.log(`│ Query: ${q}`);
+    console.log(`│ Error: ${err.message}`);
+    console.log('└─────────────────────────────────────────');
+
+    return res.status(500).json({
+      error: 'Failed to fetch data',
+      details: err.message
+    });
+  }
 });
 
 router.get('/pin-v2', async (req, res) => {
