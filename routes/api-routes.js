@@ -114,26 +114,70 @@ router.get('/goimg', async (req, res) => {
     isDefaultQuery = true;
   }
 
-  // Intercept res.json to map response to Android ImageSearchResponse format
-  const originalJson = res.json.bind(res);
-  res.json = (body) => {
-    // Only map if it's a successful goimg response with dta array
-    if (body && Array.isArray(body.dta)) {
-      const mapped = {
-        status: body.status ?? true,
-        data: body.dta.map((item, index) => ({
-          id: `goimg_${index}_${Date.now()}`,
-          url: item.image || null,
-          preview: { url: item.image || null },
-          origin: { title: item.title || null }
-        }))
-      };
-      return originalJson(mapped);
-    }
-    return originalJson(body);
-  };
+  const apiKey = process.env.API_KEY;
+  const pinUrl = `https://api.neoxr.eu/api/pinterest-v2?q=${encodeURIComponent(q)}&show=25&type=image&apikey=${apiKey}`;
+  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
 
-  await forwardRequest(res, 'goimg', { q, isDefaultQuery });
+  try {
+    const fetch = require('node-fetch');
+    const pinRes = await fetch(pinUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      timeout: 15000
+    });
+
+    if (!pinRes.ok) {
+      throw new Error(`Pinterest API returned HTTP ${pinRes.status}`);
+    }
+
+    const contentType = pinRes.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Pinterest API returned non-JSON response');
+    }
+
+    const pinData = await pinRes.json();
+
+    // Map Pinterest v2 response to Android ImageSearchResponse format
+    const mapped = {
+      status: pinData.status ?? true,
+      data: (pinData.data || []).map((item, index) => {
+        const originalUrl = item.content?.[0]?.url || null;
+        const previewUrl = originalUrl ? originalUrl.replace('/originals/', '/236x/') : null;
+        return {
+          id: `pin_${index}_${Date.now()}`,
+          url: originalUrl,
+          preview: { url: previewUrl },
+          origin: { title: item.title || null }
+        };
+      })
+    };
+
+    if (!isDefaultQuery) {
+      console.log('┌─────────────────────────────────────────');
+      console.log('│ GOIMG (PINTEREST v2)');
+      console.log('│ Status: OK');
+      console.log(`│ IP: ${ip}`);
+      console.log(`│ Query: ${q}`);
+      console.log('└─────────────────────────────────────────');
+    }
+
+    return res.json(mapped);
+  } catch (err) {
+    if (!isDefaultQuery) {
+      console.log('┌─────────────────────────────────────────');
+      console.log('│ GOIMG (PINTEREST v2)');
+      console.log('│ Status: FAILED');
+      console.log(`│ IP: ${ip}`);
+      console.log(`│ Query: ${q}`);
+      console.log(`│ Error: ${err.message}`);
+      console.log('└─────────────────────────────────────────');
+    }
+
+    return res.status(500).json({
+      error: 'Failed to fetch data',
+      details: err.message
+    });
+  }
 });
 
 router.get('/ig', async (req, res) => {
@@ -208,7 +252,69 @@ router.get('/pin-v2', async (req, res) => {
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
-  await forwardRequest(res, 'pin-v2', { url });
+
+  const apiKey = process.env.API_KEY;
+  const pinUrl = `https://api.neoxr.eu/api/pin?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
+  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+
+  try {
+    const fetch = require('node-fetch');
+    const pinRes = await fetch(pinUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      timeout: 15000
+    });
+
+    if (!pinRes.ok) {
+      throw new Error(`Pin API returned HTTP ${pinRes.status}`);
+    }
+
+    const contentType = pinRes.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Pin API returned non-JSON response');
+    }
+
+    const pinData = await pinRes.json();
+
+    // Map to Android PinterestDownloaderResponse format
+    const items = pinData.data || [];
+    const videoExts = ['.mp4', '.webm', '.mov'];
+    const isVideo = items.some(item => {
+      const url = (item.url || '').toLowerCase();
+      return videoExts.some(ext => url.endsWith(ext)) || url.includes('/videos/');
+    });
+
+    const mapped = {
+      status: pinData.status ?? true,
+      data: {
+        is_video: isVideo,
+        content: items.map(item => ({
+          url: item.url || null,
+          thumbnail: item.thumbnail || (item.url ? item.url.replace('/originals/', '/236x/') : null)
+        }))
+      }
+    };
+
+    console.log('┌─────────────────────────────────────────');
+    console.log('│ PIN-V2 (PIN API)');
+    console.log('│ Status: OK');
+    console.log(`│ IP: ${ip}`);
+    console.log('└─────────────────────────────────────────');
+
+    return res.json(mapped);
+  } catch (err) {
+    console.log('┌─────────────────────────────────────────');
+    console.log('│ PIN-V2 (PIN API)');
+    console.log('│ Status: FAILED');
+    console.log(`│ IP: ${ip}`);
+    console.log(`│ Error: ${err.message}`);
+    console.log('└─────────────────────────────────────────');
+
+    return res.status(500).json({
+      error: 'Failed to fetch data',
+      details: err.message
+    });
+  }
 });
 
 router.get('/pixiv', async (req, res) => {
