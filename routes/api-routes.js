@@ -10,16 +10,57 @@ const configPath = path.join(__dirname, '../data/app-config.json');
 // Invalidated immediately whenever config is updated via POST
 let configCache = null;
 const invalidateConfigCache = () => { configCache = null; };
+
+// Helper: try primary endpoint, fallback to secondary if failed
+const forwardWithFallback = async (res, primary, fallback, query) => {
+  const req = res.req;
+  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+
+  // Intercept res.json and res.status to block error response from primary
+  const originalJson = res.json.bind(res);
+  const originalStatus = res.status.bind(res);
+  let primaryFailed = false;
+
+  res.json = (body) => {
+    if (body && body.error) {
+      primaryFailed = true;
+      return res;
+    }
+    return originalJson(body);
+  };
+  res.status = (code) => {
+    if (code >= 400) {
+      primaryFailed = true;
+      return res;
+    }
+    return originalStatus(code);
+  };
+
+  await forwardRequest(res, primary, query);
+
+  if (primaryFailed) {
+    // Restore original methods and try fallback
+    res.json = originalJson;
+    res.status = originalStatus;
+
+    console.log(`┌─────────────────────────────────────────`);
+    console.log(`│ ${primary.toUpperCase()} → fallback to ${fallback.toUpperCase()}`);
+    console.log(`│ IP: ${ip}`);
+    console.log(`└─────────────────────────────────────────`);
+
+    await forwardRequest(res, fallback, query);
+  }
+};
 const DEFAULT_CONFIG = {
-  version: '1.0.0',
+  version: '',
   isDownloaderFeatureActive: true,
   isImageGeneratorFeatureActive: true,
   isGoImgFeatureActive: true,
   isWhatsAppStatusFeatureActive: true,
-  isForceUpdateRequired: false,
+  isForceUpdateRequired: true,
   showSupportedPlatform: true,
-  youtubeResolutions: ['360p', '480p', '720p', '1080p'],
-  audioQualities: [],
+  youtubeResolutions: ['360p', '480p', '720p'],
+  audioQualities: ['128kbps'],
   maintenanceDay: null,
   reportString: ''
 };
@@ -70,7 +111,7 @@ router.get('/douyin', async (req, res) => {
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
-  await forwardRequest(res, 'douyin', { url });
+  await forwardWithFallback(res, 'douyin', 'tiktok', { url });
 });
 
 router.get('/fb', async (req, res) => {
@@ -362,7 +403,7 @@ router.get('/tiktok', async (req, res) => {
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
-  await forwardRequest(res, 'douyin', { url }); // Temporarily using douyin endpoint
+  await forwardWithFallback(res, 'tiktok', 'douyin', { url });
 });
 
 router.get('/twitter', async (req, res) => {
