@@ -362,7 +362,7 @@ router.get('/tiktok', async (req, res) => {
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
-  await forwardRequest(res, 'tiktok', { url });
+  await forwardRequest(res, 'douyin', { url }); // Temporarily using douyin endpoint
 });
 
 router.get('/twitter', async (req, res) => {
