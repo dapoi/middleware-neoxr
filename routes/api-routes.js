@@ -114,6 +114,25 @@ router.get('/goimg', async (req, res) => {
     isDefaultQuery = true;
   }
 
+  // Intercept res.json to map response to Android ImageSearchResponse format
+  const originalJson = res.json.bind(res);
+  res.json = (body) => {
+    // Only map if it's a successful goimg response with dta array
+    if (body && Array.isArray(body.dta)) {
+      const mapped = {
+        status: body.status ?? true,
+        data: body.dta.map((item, index) => ({
+          id: `goimg_${index}_${Date.now()}`,
+          url: item.image || null,
+          preview: { url: item.image || null },
+          origin: { title: item.title || null }
+        }))
+      };
+      return originalJson(mapped);
+    }
+    return originalJson(body);
+  };
+
   await forwardRequest(res, 'goimg', { q, isDefaultQuery });
 });
 
