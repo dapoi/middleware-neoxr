@@ -77,12 +77,15 @@ router.get('/', (req, res) => {
     message: '🚀 API nyala!',
     endpoints: {
       applemusic: '/api/applemusic?url=<applemusic_url>',
+      bardimg: '/api/bardimg?q=<query>',
       douyin: '/api/douyin?url=<douyin_url>',
       fb: '/api/fb?url=<video_url>',
       goimg: '/api/goimg?q=<query>',
       ig: '/api/ig?url=<video_url>',
       meta: '/api/meta?q=<query>',
-      pinterest: '/api/pin-v2?url=<pinterest_url>',
+      pin: '/api/pin?url=<pinterest_url>',
+      'pin-v2': '/api/pin-v2?url=<pinterest_url>',
+      'pinterest-v2': '/api/pinterest-v2?q=<query>',
       pixiv: '/api/pixiv?url=<pixiv_url>',
       soundcloud: '/api/soundcloud?url=<soundcloud_url>',
       spotify: '/api/spotify?url=<spotify_url>',
@@ -122,26 +125,98 @@ router.get('/fb', async (req, res) => {
   await forwardRequest(res, 'fb', { url });
 });
 
-router.get('/goimg', async (req, res) => {
-  // Check if goimg feature is enabled
-  let config = { isGoImgFeatureActive: true };
-  try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch (e) {
-    // Use default config if file reading fails
+router.get('/ig', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
   }
-  
-  if (!config.isGoImgFeatureActive) {
-    return res.status(503).json({ 
-      error: '🚧 GoImg feature is currently disabled',
-      details: 'This feature has been temporarily disabled by the administrator.'
+  await forwardRequest(res, 'ig', { url });
+});
+
+// Dedicated handler for Bard AI image generation (/bard, /bardimg, and /meta for backward compatibility)
+const handleBard = async (req, res, endpointName = 'BARD') => {
+  const q = req.query.q;
+  if (!q) return res.status(400).json({ error: '❌ Invalid query' });
+
+  const apiKey = process.env.API_KEY;
+  const bardUrl = `https://api.neoxr.eu/api/bardimg?q=${encodeURIComponent(q)}&apikey=${apiKey}`;
+  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+
+  try {
+    const fetch = require('node-fetch');
+    const bardRes = await fetch(bardUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      timeout: 15000
     });
+
+    if (!bardRes.ok) {
+      throw new Error(`Bard API returned HTTP ${bardRes.status}`);
+    }
+
+    const contentType = bardRes.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Bard API returned non-JSON response');
+    }
+
+    const bardData = await bardRes.json();
+
+    // Map Bard response to Android ImageAiResponse format:
+    // { data: { media: [{ url: "..." }] } }
+    const mapped = {
+      data: {
+        media: bardData.data?.url ? [{ url: bardData.data.url }] : []
+      }
+    };
+
+    console.log('┌─────────────────────────────────────────');
+    console.log(`│ ${endpointName.toUpperCase()} (BARD)`);
+    console.log('│ Status: OK');
+    console.log(`│ IP: ${ip}`);
+    console.log(`│ Query: ${q}`);
+    console.log('└─────────────────────────────────────────');
+
+    return res.json(mapped);
+  } catch (err) {
+    console.log('┌─────────────────────────────────────────');
+    console.log(`│ ${endpointName.toUpperCase()} (BARD)`);
+    console.log('│ Status: FAILED');
+    console.log(`│ IP: ${ip}`);
+    console.log(`│ Query: ${q}`);
+    console.log(`│ Error: ${err.message}`);
+    console.log('└─────────────────────────────────────────');
+
+    return res.status(500).json({
+      error: 'Failed to fetch data',
+      details: err.message
+    });
+  }
+};
+
+router.get('/bardimg', (req, res) => handleBard(req, res, 'bardimg'));
+router.get('/meta', (req, res) => handleBard(req, res, 'meta'));
+
+// Dedicated handler for Pinterest Search (/pinterest-v2 and /goimg for backward compatibility)
+const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2') => {
+  if (endpointName === 'goimg') {
+    let config = { isGoImgFeatureActive: true };
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch (e) {
+      // Use default config if file reading fails
+    }
+    
+    if (!config.isGoImgFeatureActive) {
+      return res.status(503).json({ 
+        error: '🚧 GoImg feature is currently disabled',
+        details: 'This feature has been temporarily disabled by the administrator.'
+      });
+    }
   }
 
   let q = req.query.q;
   let isDefaultQuery = false;
   
-  // Use random default query if no query provided
   if (!q) {
     const defaultQueries = [
       "anime",
@@ -195,7 +270,7 @@ router.get('/goimg', async (req, res) => {
 
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
-      console.log('│ GOIMG (PINTEREST v2)');
+      console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
       console.log('│ Status: OK');
       console.log(`│ IP: ${ip}`);
       console.log(`│ Query: ${q}`);
@@ -206,7 +281,7 @@ router.get('/goimg', async (req, res) => {
   } catch (err) {
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
-      console.log('│ GOIMG (PINTEREST v2)');
+      console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
       console.log('│ Status: FAILED');
       console.log(`│ IP: ${ip}`);
       console.log(`│ Query: ${q}`);
@@ -219,76 +294,13 @@ router.get('/goimg', async (req, res) => {
       details: err.message
     });
   }
-});
+};
 
-router.get('/ig', async (req, res) => {
-  const url = req.query.url;
-  if (!url || !url.startsWith('http')) {
-    return res.status(400).json({ error: '❌ Invalid URL' });
-  }
-  await forwardRequest(res, 'ig', { url });
-});
+router.get('/pinterest-v2', (req, res) => handlePinterestSearch(req, res, 'pinterest-v2'));
+router.get('/goimg', (req, res) => handlePinterestSearch(req, res, 'goimg'));
 
-router.get('/meta', async (req, res) => {
-  const q = req.query.q;
-  if (!q) return res.status(400).json({ error: '❌ Invalid query' });
-
-  const apiKey = process.env.API_KEY;
-  const bardUrl = `https://api.neoxr.eu/api/bardimg?q=${encodeURIComponent(q)}&apikey=${apiKey}`;
-  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
-
-  try {
-    const fetch = require('node-fetch');
-    const bardRes = await fetch(bardUrl, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      timeout: 15000
-    });
-
-    if (!bardRes.ok) {
-      throw new Error(`Bard API returned HTTP ${bardRes.status}`);
-    }
-
-    const contentType = bardRes.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('Bard API returned non-JSON response');
-    }
-
-    const bardData = await bardRes.json();
-
-    // Map Bard response to Android ImageAiResponse format:
-    // { data: { media: [{ url: "..." }] } }
-    const mapped = {
-      data: {
-        media: bardData.data?.url ? [{ url: bardData.data.url }] : []
-      }
-    };
-
-    console.log('┌─────────────────────────────────────────');
-    console.log('│ META (BARD)');
-    console.log('│ Status: OK');
-    console.log(`│ IP: ${ip}`);
-    console.log(`│ Query: ${q}`);
-    console.log('└─────────────────────────────────────────');
-
-    return res.json(mapped);
-  } catch (err) {
-    console.log('┌─────────────────────────────────────────');
-    console.log('│ META (BARD)');
-    console.log('│ Status: FAILED');
-    console.log(`│ IP: ${ip}`);
-    console.log(`│ Query: ${q}`);
-    console.log(`│ Error: ${err.message}`);
-    console.log('└─────────────────────────────────────────');
-
-    return res.status(500).json({
-      error: 'Failed to fetch data',
-      details: err.message
-    });
-  }
-});
-
-router.get('/pin-v2', async (req, res) => {
+// Dedicated handler for Pinterest Pin Downloader (/pin and /pin-v2 for backward compatibility)
+const handlePinDownload = async (req, res, endpointName = 'PIN') => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ Invalid URL' });
@@ -321,8 +333,8 @@ router.get('/pin-v2', async (req, res) => {
     const items = pinData.data || [];
     const videoExts = ['.mp4', '.webm', '.mov'];
     const isVideo = items.some(item => {
-      const url = (item.url || '').toLowerCase();
-      return videoExts.some(ext => url.endsWith(ext)) || url.includes('/videos/');
+      const u = (item.url || '').toLowerCase();
+      return videoExts.some(ext => u.endsWith(ext)) || u.includes('/videos/');
     });
 
     const mapped = {
@@ -337,7 +349,7 @@ router.get('/pin-v2', async (req, res) => {
     };
 
     console.log('┌─────────────────────────────────────────');
-    console.log('│ PIN-V2 (PIN API)');
+    console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
     console.log('│ Status: OK');
     console.log(`│ IP: ${ip}`);
     console.log('└─────────────────────────────────────────');
@@ -345,7 +357,7 @@ router.get('/pin-v2', async (req, res) => {
     return res.json(mapped);
   } catch (err) {
     console.log('┌─────────────────────────────────────────');
-    console.log('│ PIN-V2 (PIN API)');
+    console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
     console.log('│ Status: FAILED');
     console.log(`│ IP: ${ip}`);
     console.log(`│ Error: ${err.message}`);
@@ -356,7 +368,10 @@ router.get('/pin-v2', async (req, res) => {
       details: err.message
     });
   }
-});
+};
+
+router.get('/pin', (req, res) => handlePinDownload(req, res, 'pin'));
+router.get('/pin-v2', (req, res) => handlePinDownload(req, res, 'pin-v2'));
 
 router.get('/pixiv', async (req, res) => {
   const url = req.query.url;
