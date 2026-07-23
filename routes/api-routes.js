@@ -133,8 +133,8 @@ router.get('/ig', async (req, res) => {
   await forwardRequest(res, 'ig', { url });
 });
 
-// Dedicated handler for Bard AI image generation (/bard, /bardimg, and /meta for backward compatibility)
-const handleBard = async (req, res, endpointName = 'BARD') => {
+// Dedicated handler for Bard AI image generation (/bardimg raw, /meta mapped for backward compatibility)
+const handleBard = async (req, res, endpointName = 'BARD', isLegacy = false) => {
   const q = req.query.q;
   if (!q) return res.status(400).json({ error: '❌ Invalid query' });
 
@@ -161,20 +161,24 @@ const handleBard = async (req, res, endpointName = 'BARD') => {
 
     const bardData = await bardRes.json();
 
-    // Map Bard response to Android ImageAiResponse format:
-    // { data: { media: [{ url: "..." }] } }
-    const mapped = {
-      data: {
-        media: bardData.data?.url ? [{ url: bardData.data.url }] : []
-      }
-    };
-
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (BARD)`);
     console.log('│ Status: OK');
     console.log(`│ IP: ${ip}`);
     console.log(`│ Query: ${q}`);
     console.log('└─────────────────────────────────────────');
+
+    if (!isLegacy) {
+      return res.json(bardData);
+    }
+
+    // Map Bard response to legacy Android ImageAiResponse format:
+    // { data: { media: [{ url: "..." }] } }
+    const mapped = {
+      data: {
+        media: bardData.data?.url ? [{ url: bardData.data.url }] : []
+      }
+    };
 
     return res.json(mapped);
   } catch (err) {
@@ -193,11 +197,11 @@ const handleBard = async (req, res, endpointName = 'BARD') => {
   }
 };
 
-router.get('/bardimg', (req, res) => handleBard(req, res, 'bardimg'));
-router.get('/meta', (req, res) => handleBard(req, res, 'meta'));
+router.get('/bardimg', (req, res) => handleBard(req, res, 'bardimg', false));
+router.get('/meta', (req, res) => handleBard(req, res, 'meta', true));
 
-// Dedicated handler for Pinterest Search (/pinterest-v2 and /goimg for backward compatibility)
-const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2') => {
+// Dedicated handler for Pinterest Search (/pinterest-v2 raw, /goimg mapped for backward compatibility)
+const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', isLegacy = false) => {
   if (endpointName === 'goimg') {
     let config = { isGoImgFeatureActive: true };
     try {
@@ -253,7 +257,20 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2') =>
 
     const pinData = await pinRes.json();
 
-    // Map Pinterest v2 response to Android ImageSearchResponse format
+    if (!isDefaultQuery) {
+      console.log('┌─────────────────────────────────────────');
+      console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
+      console.log('│ Status: OK');
+      console.log(`│ IP: ${ip}`);
+      console.log(`│ Query: ${q}`);
+      console.log('└─────────────────────────────────────────');
+    }
+
+    if (!isLegacy) {
+      return res.json(pinData);
+    }
+
+    // Map Pinterest v2 response to legacy Android ImageSearchResponse format
     const mapped = {
       status: pinData.status ?? true,
       data: (pinData.data || []).map((item, index) => {
@@ -267,15 +284,6 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2') =>
         };
       })
     };
-
-    if (!isDefaultQuery) {
-      console.log('┌─────────────────────────────────────────');
-      console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
-      console.log('│ Status: OK');
-      console.log(`│ IP: ${ip}`);
-      console.log(`│ Query: ${q}`);
-      console.log('└─────────────────────────────────────────');
-    }
 
     return res.json(mapped);
   } catch (err) {
@@ -296,11 +304,11 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2') =>
   }
 };
 
-router.get('/pinterest-v2', (req, res) => handlePinterestSearch(req, res, 'pinterest-v2'));
-router.get('/goimg', (req, res) => handlePinterestSearch(req, res, 'goimg'));
+router.get('/pinterest-v2', (req, res) => handlePinterestSearch(req, res, 'pinterest-v2', false));
+router.get('/goimg', (req, res) => handlePinterestSearch(req, res, 'goimg', true));
 
-// Dedicated handler for Pinterest Pin Downloader (/pin and /pin-v2 for backward compatibility)
-const handlePinDownload = async (req, res, endpointName = 'PIN') => {
+// Dedicated handler for Pinterest Pin Downloader (/pin raw, /pin-v2 mapped for backward compatibility)
+const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = false) => {
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ Invalid URL' });
@@ -329,7 +337,17 @@ const handlePinDownload = async (req, res, endpointName = 'PIN') => {
 
     const pinData = await pinRes.json();
 
-    // Map to Android PinterestDownloaderResponse format
+    console.log('┌─────────────────────────────────────────');
+    console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
+    console.log('│ Status: OK');
+    console.log(`│ IP: ${ip}`);
+    console.log('└─────────────────────────────────────────');
+
+    if (!isLegacy) {
+      return res.json(pinData);
+    }
+
+    // Map to legacy Android PinterestDownloaderResponse format
     const items = pinData.data || [];
     const videoExts = ['.mp4', '.webm', '.mov'];
     const isVideo = items.some(item => {
@@ -348,12 +366,6 @@ const handlePinDownload = async (req, res, endpointName = 'PIN') => {
       }
     };
 
-    console.log('┌─────────────────────────────────────────');
-    console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
-    console.log('│ Status: OK');
-    console.log(`│ IP: ${ip}`);
-    console.log('└─────────────────────────────────────────');
-
     return res.json(mapped);
   } catch (err) {
     console.log('┌─────────────────────────────────────────');
@@ -370,8 +382,8 @@ const handlePinDownload = async (req, res, endpointName = 'PIN') => {
   }
 };
 
-router.get('/pin', (req, res) => handlePinDownload(req, res, 'pin'));
-router.get('/pin-v2', (req, res) => handlePinDownload(req, res, 'pin-v2'));
+router.get('/pin', (req, res) => handlePinDownload(req, res, 'pin', false));
+router.get('/pin-v2', (req, res) => handlePinDownload(req, res, 'pin-v2', true));
 
 router.get('/pixiv', async (req, res) => {
   const url = req.query.url;
