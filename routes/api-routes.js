@@ -77,7 +77,6 @@ router.get('/', (req, res) => {
     message: '🚀 API nyala!',
     endpoints: {
       applemusic: '/api/applemusic?url=<applemusic_url>',
-      bardimg: '/api/bardimg?q=<query>',
       douyin: '/api/douyin?url=<douyin_url>',
       fb: '/api/fb?url=<video_url>',
       genimg: '/api/genimg?prompt=<prompt>',
@@ -200,70 +199,6 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
 
 router.get('/genimg', (req, res) => handleGenImg(req, res, 'genimg', false));
 router.get('/meta', (req, res) => handleGenImg(req, res, 'meta', true));
-
-// Dedicated handler for Bard AI image generation
-const handleBard = async (req, res, endpointName = 'BARD', isLegacy = false) => {
-  const q = req.query.q || req.query.prompt;
-  if (!q) return res.status(400).json({ error: '❌ Invalid query' });
-
-  const apiKey = process.env.API_KEY;
-  const bardUrl = `https://api.neoxr.eu/api/bardimg?q=${encodeURIComponent(q)}&apikey=${apiKey}`;
-  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
-
-  try {
-    const fetch = require('node-fetch');
-    const bardRes = await fetch(bardUrl, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      timeout: 15000
-    });
-
-    if (!bardRes.ok) {
-      throw new Error(`Bard API returned HTTP ${bardRes.status}`);
-    }
-
-    const contentType = bardRes.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('Bard API returned non-JSON response');
-    }
-
-    const bardData = await bardRes.json();
-
-    console.log('┌─────────────────────────────────────────');
-    console.log(`│ ${endpointName.toUpperCase()} (BARD)`);
-    console.log('│ Status: OK');
-    console.log(`│ IP: ${ip}`);
-    console.log(`│ Query: ${q}`);
-    console.log('└─────────────────────────────────────────');
-
-    if (!isLegacy) {
-      return res.json(bardData);
-    }
-
-    const mapped = {
-      data: {
-        media: bardData.data?.url ? [{ url: bardData.data.url }] : []
-      }
-    };
-
-    return res.json(mapped);
-  } catch (err) {
-    console.log('┌─────────────────────────────────────────');
-    console.log(`│ ${endpointName.toUpperCase()} (BARD)`);
-    console.log('│ Status: FAILED');
-    console.log(`│ IP: ${ip}`);
-    console.log(`│ Query: ${q}`);
-    console.log(`│ Error: ${err.message}`);
-    console.log('└─────────────────────────────────────────');
-
-    return res.status(500).json({
-      error: 'Failed to fetch data',
-      details: err.message
-    });
-  }
-};
-
-router.get('/bardimg', (req, res) => handleBard(req, res, 'bardimg', false));
 
 // Dedicated handler for Pinterest Search (/pinterest-v2 raw, /goimg mapped for backward compatibility)
 const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', isLegacy = false) => {
