@@ -34,6 +34,15 @@ const formatDuration = (ms) => {
   return `${mins}m ${secs}s`;
 };
 
+// Helper function to extract device name from query param or headers
+const getDeviceName = (req) => {
+  if (!req) return null;
+  const q = req.query || {};
+  const h = req.headers || {};
+  const dev = q.device || q.device_name || q.deviceName || q.model || h['x-device-name'] || h['x-device-model'];
+  return (dev && dev !== '-') ? dev : null;
+};
+
 // In-memory response caching untuk search endpoints (goimg, meta)
 // Cache expires after 30 minutes - safe untuk search results yang jarang berubah
 const responseCache = new Map();
@@ -112,6 +121,7 @@ const forwardRequest = async (res, endpoint, query) => {
   
   // Track request count per IP per day
   const currentCount = getDailyRequestCount(userIP);
+  const device = getDeviceName(req);
   
   // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
   try {
@@ -166,6 +176,7 @@ const forwardRequest = async (res, endpoint, query) => {
       console.log(`│ Status: CACHED (${formatDuration(latency)})`);
       console.log(`│ IP: ${userIP}`);
       console.log(`│ Daily Requests: ${currentCount}`);
+      if (device) console.log(`│ Device: ${device}`);
       console.log('└─────────────────────────────────────────');
     }
     return res.json(cachedResponse);
@@ -210,6 +221,7 @@ const forwardRequest = async (res, endpoint, query) => {
           console.log(`│ Status: HTTP ERROR ${response.status} (${formatDuration(latency)})`);
           console.log(`│ IP: ${userIP}`);
           console.log(`│ Daily Requests: ${currentCount}`);
+          if (device) console.log(`│ Device: ${device}`);
           console.log(`│ Error: ${response.statusText}`);
           console.log('└─────────────────────────────────────────');
         }
@@ -251,6 +263,7 @@ const forwardRequest = async (res, endpoint, query) => {
         console.log(`│ Status: OK (${formatDuration(latency)})`);
         console.log(`│ IP: ${userIP}`);
         console.log(`│ Daily Requests: ${currentCount}`);
+        if (device) console.log(`│ Device: ${device}`);
         if (query.url) {
           console.log(`│ URL: ${truncateStr(query.url, 60)}`);
         }
@@ -304,6 +317,7 @@ const forwardRequest = async (res, endpoint, query) => {
     console.log('│ Status: FAILED');
     console.log(`│ IP: ${userIP}`);
     console.log(`│ Daily Requests: ${currentCount}`);
+    if (device) console.log(`│ Device: ${device}`);
     if (endpoint === 'meta' && query.q) {
       console.log(`│ Query: ${query.q}`);
     } else if (endpoint === 'goimg' && query.q && !query.isDefaultQuery) {
@@ -323,3 +337,4 @@ const forwardRequest = async (res, endpoint, query) => {
 module.exports = forwardRequest;
 module.exports.getDailyRequestCount = getDailyRequestCount;
 module.exports.formatDuration = formatDuration;
+module.exports.getDeviceName = getDeviceName;

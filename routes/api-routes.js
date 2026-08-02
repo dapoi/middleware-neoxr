@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forwardRequest = require('../utils/forward-request');
-const { getDailyRequestCount, formatDuration } = forwardRequest;
+const { getDailyRequestCount, formatDuration, getDeviceName } = forwardRequest;
 const { requireAuth } = require('../utils/auth-middleware');
 const fs = require('fs');
 const path = require('path');
@@ -167,6 +167,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
 
   const currentCount = getDailyRequestCount(ip);
+  const device = getDeviceName(req);
 
   try {
     const fetch = require('node-fetch');
@@ -193,6 +194,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
     console.log(`│ Status: OK (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
+    if (device) console.log(`│ Device: ${device}`);
     console.log(`│ Prompt: ${prompt}`);
     console.log('└─────────────────────────────────────────');
 
@@ -216,6 +218,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
     console.log(`│ Status: FAILED (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
+    if (device) console.log(`│ Device: ${device}`);
     console.log(`│ Prompt: ${prompt}`);
     console.log(`│ Error: ${err.message}`);
     console.log('└─────────────────────────────────────────');
@@ -287,6 +290,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
   const pinUrl = `https://api.neoxr.eu/api/pinterest-v2?q=${encodeURIComponent(q)}&show=25&type=image&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
   const currentCount = getDailyRequestCount(ip);
+  const device = getDeviceName(req);
 
   // Helper function to respond (either raw or mapped)
   const sendResponse = (pinData, isCached = false) => {
@@ -297,6 +301,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
       console.log(`│ Status: ${isCached ? 'CACHED (5 min TTL)' : 'OK'} (${formatDuration(latency)})`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Daily Requests: ${currentCount}`);
+      if (device) console.log(`│ Device: ${device}`);
       console.log(`│ Query: ${q}`);
       console.log('└─────────────────────────────────────────');
     }
@@ -362,6 +367,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
       console.log(`│ Status: FAILED (${formatDuration(latency)})`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Daily Requests: ${currentCount}`);
+      if (device) console.log(`│ Device: ${device}`);
       console.log(`│ Query: ${q}`);
       console.log(`│ Error: ${err.message}`);
       console.log('└─────────────────────────────────────────');
@@ -389,6 +395,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
   const pinUrl = `https://api.neoxr.eu/api/pin?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
   const currentCount = getDailyRequestCount(ip);
+  const device = getDeviceName(req);
 
   try {
     const fetch = require('node-fetch');
@@ -417,6 +424,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
     console.log(`│ Status: OK (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
+    if (device) console.log(`│ Device: ${device}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log('└─────────────────────────────────────────');
 
@@ -453,6 +461,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
     console.log(`│ Status: FAILED (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
+    if (device) console.log(`│ Device: ${device}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log(`│ Error: ${err.message}`);
     console.log('└─────────────────────────────────────────');
@@ -552,6 +561,20 @@ router.get('/auth-check', requireAuth, (_req, res) => {
 const allowedPackageNames = ['com.dapascript.mever'];
 // Serve 100% from RAM with HTTP cache headers
 router.get('/app-config', (req, res) => {
+  const startTime = Date.now();
+  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+  const device = getDeviceName(req);
+  const currentCount = getDailyRequestCount(ip);
+  const latency = Date.now() - startTime;
+
+  console.log('┌─────────────────────────────────────────');
+  console.log('│ APP-CONFIG');
+  console.log(`│ Status: OK (${formatDuration(latency)})`);
+  console.log(`│ IP: ${ip}`);
+  console.log(`│ Daily Requests: ${currentCount}`);
+  if (device) console.log(`│ Device: ${device}`);
+  console.log('└─────────────────────────────────────────');
+
   const config = getConfig();
   res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
   res.json({ ...config, currentMaintenanceDay: getCurrentDayName() });
