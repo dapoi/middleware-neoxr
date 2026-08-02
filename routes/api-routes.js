@@ -200,6 +200,30 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
 router.get('/genimg', (req, res) => handleGenImg(req, res, 'genimg', false));
 router.get('/meta', (req, res) => handleGenImg(req, res, 'meta', true));
 
+// In-memory caching for Pinterest Search (/pinterest-v2 and /goimg)
+// Cache expires after 15 minutes
+const pinSearchCache = new Map();
+const PIN_CACHE_TTL_MS = 15 * 60 * 1000;
+
+const getCachedPinSearch = (query) => {
+  const key = query.trim().toLowerCase();
+  const cached = pinSearchCache.get(key);
+  if (cached && (Date.now() - cached.timestamp < PIN_CACHE_TTL_MS)) {
+    return cached.data;
+  }
+  if (cached) pinSearchCache.delete(key);
+  return null;
+};
+
+const setCachedPinSearch = (query, data) => {
+  const key = query.trim().toLowerCase();
+  pinSearchCache.set(key, { data, timestamp: Date.now() });
+  if (pinSearchCache.size > 500) {
+    const oldestKey = pinSearchCache.keys().next().value;
+    pinSearchCache.delete(oldestKey);
+  }
+};
+
 // Dedicated handler for Pinterest Search (/pinterest-v2 raw, /goimg mapped for backward compatibility)
 const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', isLegacy = false) => {
   if (endpointName === 'goimg') {
@@ -238,29 +262,12 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
   const pinUrl = `https://api.neoxr.eu/api/pinterest-v2?q=${encodeURIComponent(q)}&show=25&type=image&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
 
-  try {
-    const fetch = require('node-fetch');
-    const pinRes = await fetch(pinUrl, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      timeout: 15000
-    });
-
-    if (!pinRes.ok) {
-      throw new Error(`Pinterest API returned HTTP ${pinRes.status}`);
-    }
-
-    const contentType = pinRes.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('Pinterest API returned non-JSON response');
-    }
-
-    const pinData = await pinRes.json();
-
+  // Helper function to respond (either raw or mapped)
+  const sendResponse = (pinData, isCached = false) => {
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
-      console.log('│ Status: OK');
+      console.log(`│ Status: ${isCached ? 'CACHED (15 min TTL)' : 'OK'}`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Query: ${q}`);
       console.log('└─────────────────────────────────────────');
@@ -286,6 +293,39 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
     };
 
     return res.json(mapped);
+  };
+
+  // Check cache first
+  const cachedData = getCachedPinSearch(q);
+  if (cachedData) {
+    return sendResponse(cachedData, true);
+  }
+
+  try {
+    const fetch = require('node-fetch');
+    const pinRes = await fetch(pinUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      timeout: 15000
+    });
+
+    if (!pinRes.ok) {
+      throw new Error(`Pinterest API returned HTTP ${pinRes.status}`);
+    }
+
+    const contentType = pinRes.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Pinterest API returned non-JSON response');
+    }
+
+    const pinData = await pinRes.json();
+
+    // Cache successful response
+    if (pinData && pinData.status) {
+      setCachedPinSearch(q, pinData);
+    }
+
+    return sendResponse(pinData, false);
   } catch (err) {
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
