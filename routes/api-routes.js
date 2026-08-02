@@ -6,51 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const configPath = path.join(__dirname, '../data/app-config.json');
 
-// In-memory config cache — avoids disk read on every splashscreen hit
-// Invalidated immediately whenever config is updated via POST
-let configCache = null;
-const invalidateConfigCache = () => { configCache = null; };
-
-// Helper: try primary endpoint, fallback to secondary if failed
-const forwardWithFallback = async (res, primary, fallback, query) => {
-  const req = res.req;
-  const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
-
-  // Intercept res.json and res.status to block error response from primary
-  const originalJson = res.json.bind(res);
-  const originalStatus = res.status.bind(res);
-  let primaryFailed = false;
-
-  res.json = (body) => {
-    if (body && body.error) {
-      primaryFailed = true;
-      return res;
-    }
-    return originalJson(body);
-  };
-  res.status = (code) => {
-    if (code >= 400) {
-      primaryFailed = true;
-      return res;
-    }
-    return originalStatus(code);
-  };
-
-  await forwardRequest(res, primary, query);
-
-  if (primaryFailed) {
-    // Restore original methods and try fallback
-    res.json = originalJson;
-    res.status = originalStatus;
-
-    console.log(`┌─────────────────────────────────────────`);
-    console.log(`│ ${primary.toUpperCase()} → fallback to ${fallback.toUpperCase()}`);
-    console.log(`│ IP: ${ip}`);
-    console.log(`└─────────────────────────────────────────`);
-
-    await forwardRequest(res, fallback, query);
-  }
-};
 const DEFAULT_CONFIG = {
   version: '',
   isDownloaderFeatureActive: true,
@@ -64,6 +19,32 @@ const DEFAULT_CONFIG = {
   maintenanceDay: null,
   reportString: ''
 };
+
+// In-memory config cache — preloaded on bootup to eliminate disk I/O on GET requests
+let configCache = null;
+
+const loadConfigFromDisk = () => {
+  try {
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {
+    console.warn('Could not read config file, using default config:', e.message);
+    return { ...DEFAULT_CONFIG };
+  }
+};
+
+const getConfig = () => {
+  if (!configCache) {
+    configCache = loadConfigFromDisk();
+  }
+  return configCache;
+};
+
+const invalidateConfigCache = () => {
+  configCache = loadConfigFromDisk();
+};
+
+// Bootup preload
+configCache = loadConfigFromDisk();
 
 // Helper function to get current day name
 function getCurrentDayName() {
@@ -227,13 +208,7 @@ const setCachedPinSearch = (query, data) => {
 // Dedicated handler for Pinterest Search (/pinterest-v2 raw, /goimg mapped for backward compatibility)
 const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', isLegacy = false) => {
   if (endpointName === 'goimg') {
-    let config = { isGoImgFeatureActive: true };
-    try {
-      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    } catch (e) {
-      // Use default config if file reading fails
-    }
-    
+    const config = getConfig();
     if (!config.isGoImgFeatureActive) {
       return res.status(503).json({ 
         error: '🚧 GoImg feature is currently disabled',
@@ -508,50 +483,16 @@ router.get('/auth-check', requireAuth, (_req, res) => {
 
 // GET app config - Public endpoint
 const allowedPackageNames = ['com.dapascript.mever'];
-// This endpoint is now public, no header or session protection
+// Serve 100% from RAM with HTTP cache headers
 router.get('/app-config', (req, res) => {
-  // Serve from in-memory cache if available (avoids disk I/O on every splashscreen hit)
-  if (configCache) {
-    res.set('Cache-Control', 'public, max-age=10');
-    return res.json({ ...configCache, currentMaintenanceDay: getCurrentDayName() });
-  }
-
-  let config = { ...DEFAULT_CONFIG };
-  try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch (e) {
-    console.warn('Could not read config file, using default config:', e.message);
-  }
-
-  // Populate cache for subsequent requests
-  configCache = config;
-
-  // Always send current day for real-time display
-  res.set('Cache-Control', 'public, max-age=10');
+  const config = getConfig();
+  res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
   res.json({ ...config, currentMaintenanceDay: getCurrentDayName() });
 });
 
 // POST app config (update) - Protected endpoint
 router.post('/app-config', requireAuth, express.json(), (req, res) => {
-  // Read current config
-  let currentConfig = { 
-    version: '1.0.0', 
-    isDownloaderFeatureActive: true, 
-    isImageGeneratorFeatureActive: true,
-    isGoImgFeatureActive: true,
-    isWhatsAppStatusFeatureActive: true,
-    isForceUpdateRequired: false,
-    showSupportedPlatform: true,
-    youtubeResolutions: ["360p", "480p", "720p", "1080p"],
-    audioQualities: [],
-    maintenanceDay: null,
-    reportString: ""
-  };
-  try {
-    currentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch (e) {
-    console.warn('Could not read current config file, using default config:', e.message);
-  }
+  const currentConfig = getConfig();
 
   // Always convert youtubeResolutions to array format for storage
   let youtubeResolutions = [];
@@ -626,15 +567,14 @@ router.post('/report', (req, res) => {
   }
 
   try {
-    const rawData = fs.readFileSync(configPath, 'utf8');
-    const configData = JSON.parse(rawData);
+    const configData = { ...getConfig() };
     
     // Save the incoming message into the config's reportString
     configData.reportString = message;
     
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
-    invalidateConfigCache(); // force next GET to re-read from disk
+    invalidateConfigCache(); // reload into memory
     
     // Return 204 No Content (matches Unit in Kotlin)
     res.status(204).send();
