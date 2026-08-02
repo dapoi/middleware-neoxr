@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forwardRequest = require('../utils/forward-request');
+const { getDailyRequestCount } = forwardRequest;
 const { requireAuth } = require('../utils/auth-middleware');
 const fs = require('fs');
 const path = require('path');
@@ -165,6 +166,8 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
   const genUrl = `https://api.neoxr.eu/api/genimg?prompt=${encodeURIComponent(prompt)}&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
 
+  const currentCount = getDailyRequestCount(ip);
+
   try {
     const fetch = require('node-fetch');
     const genRes = await fetch(genUrl, {
@@ -189,6 +192,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
     console.log(`│ ${endpointName.toUpperCase()} (GENIMG)`);
     console.log(`│ Status: OK (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
+    console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ Prompt: ${prompt}`);
     console.log('└─────────────────────────────────────────');
 
@@ -211,6 +215,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
     console.log(`│ ${endpointName.toUpperCase()} (GENIMG)`);
     console.log(`│ Status: FAILED (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
+    console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ Prompt: ${prompt}`);
     console.log(`│ Error: ${err.message}`);
     console.log('└─────────────────────────────────────────');
@@ -281,6 +286,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
   const apiKey = process.env.API_KEY;
   const pinUrl = `https://api.neoxr.eu/api/pinterest-v2?q=${encodeURIComponent(q)}&show=25&type=image&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+  const currentCount = getDailyRequestCount(ip);
 
   // Helper function to respond (either raw or mapped)
   const sendResponse = (pinData, isCached = false) => {
@@ -290,6 +296,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
       console.log(`│ Status: ${isCached ? 'CACHED (5 min TTL)' : 'OK'} (${latency}ms)`);
       console.log(`│ IP: ${ip}`);
+      console.log(`│ Daily Requests: ${currentCount}`);
       console.log(`│ Query: ${q}`);
       console.log('└─────────────────────────────────────────');
     }
@@ -354,6 +361,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
       console.log(`│ Status: FAILED (${latency}ms)`);
       console.log(`│ IP: ${ip}`);
+      console.log(`│ Daily Requests: ${currentCount}`);
       console.log(`│ Query: ${q}`);
       console.log(`│ Error: ${err.message}`);
       console.log('└─────────────────────────────────────────');
@@ -380,6 +388,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
   const apiKey = process.env.API_KEY;
   const pinUrl = `https://api.neoxr.eu/api/pin?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+  const currentCount = getDailyRequestCount(ip);
 
   try {
     const fetch = require('node-fetch');
@@ -407,6 +416,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
     console.log(`│ Status: OK (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
+    console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log('└─────────────────────────────────────────');
 
@@ -442,6 +452,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
     console.log(`│ Status: FAILED (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
+    console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log(`│ Error: ${err.message}`);
     console.log('└─────────────────────────────────────────');

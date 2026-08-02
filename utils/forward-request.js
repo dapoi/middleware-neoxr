@@ -7,6 +7,24 @@ dotenv.config();
 // In-memory request counting (resets on server restart)
 const requestCounts = new Map();
 
+const getDailyRequestCount = (userIP) => {
+  const currentDate = new Date().toDateString();
+  const countKey = `${userIP}-${currentDate}`;
+  const currentCount = (requestCounts.get(countKey) || 0) + 1;
+  requestCounts.set(countKey, currentCount);
+
+  // Clean up old counts (keep only current and previous day)
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayDate = yesterday.toDateString();
+  for (const [key] of requestCounts) {
+    if (!key.includes(currentDate) && !key.includes(yesterdayDate)) {
+      requestCounts.delete(key);
+    }
+  }
+  return currentCount;
+};
+
 // In-memory response caching untuk search endpoints (goimg, meta)
 // Cache expires after 30 minutes - safe untuk search results yang jarang berubah
 const responseCache = new Map();
@@ -84,20 +102,8 @@ const forwardRequest = async (res, endpoint, query) => {
   const packageName = req.headers['x-package-name'] || '-';
   
   // Track request count per IP per day
-  const currentDate = new Date().toDateString();
-  const countKey = `${userIP}-${currentDate}`;
-  const currentCount = (requestCounts.get(countKey) || 0) + 1;
-  requestCounts.set(countKey, currentCount);
+  const currentCount = getDailyRequestCount(userIP);
   
-  // Clean up old counts (keep only current and previous day)
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayDate = yesterday.toDateString();
-  for (const [key] of requestCounts) {
-    if (!key.includes(currentDate) && !key.includes(yesterdayDate)) {
-      requestCounts.delete(key);
-    }
-  }
   // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
   try {
     const req = res.req;
@@ -150,6 +156,7 @@ const forwardRequest = async (res, endpoint, query) => {
       console.log(`│ ${endpoint.toUpperCase()}`);
       console.log(`│ Status: CACHED (${latency}ms)`);
       console.log(`│ IP: ${userIP}`);
+      console.log(`│ Daily Requests: ${currentCount}`);
       console.log('└─────────────────────────────────────────');
     }
     return res.json(cachedResponse);
@@ -305,3 +312,4 @@ const forwardRequest = async (res, endpoint, query) => {
 };
 
 module.exports = forwardRequest;
+module.exports.getDailyRequestCount = getDailyRequestCount;
