@@ -25,6 +25,15 @@ const getDailyRequestCount = (userIP) => {
   return currentCount;
 };
 
+// Helper function to format latency to human readable string (e.g. 250ms, 1.28s, 1m 5s)
+const formatDuration = (ms) => {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
+  const mins = Math.floor(ms / 60000);
+  const secs = ((ms % 60000) / 1000).toFixed(1);
+  return `${mins}m ${secs}s`;
+};
+
 // In-memory response caching untuk search endpoints (goimg, meta)
 // Cache expires after 30 minutes - safe untuk search results yang jarang berubah
 const responseCache = new Map();
@@ -154,7 +163,7 @@ const forwardRequest = async (res, endpoint, query) => {
     if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpoint.toUpperCase()}`);
-      console.log(`│ Status: CACHED (${latency}ms)`);
+      console.log(`│ Status: CACHED (${formatDuration(latency)})`);
       console.log(`│ IP: ${userIP}`);
       console.log(`│ Daily Requests: ${currentCount}`);
       console.log('└─────────────────────────────────────────');
@@ -198,7 +207,7 @@ const forwardRequest = async (res, endpoint, query) => {
         if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
           console.log('┌─────────────────────────────────────────');
           console.log(`│ ${endpoint.toUpperCase()}`);
-          console.log(`│ Status: HTTP ERROR ${response.status} (${latency}ms)`);
+          console.log(`│ Status: HTTP ERROR ${response.status} (${formatDuration(latency)})`);
           console.log(`│ IP: ${userIP}`);
           console.log(`│ Daily Requests: ${currentCount}`);
           console.log(`│ Error: ${response.statusText}`);
@@ -239,7 +248,7 @@ const forwardRequest = async (res, endpoint, query) => {
       if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
         console.log('┌─────────────────────────────────────────');
         console.log(`│ ${endpoint.toUpperCase()}`);
-        console.log(`│ Status: OK (${latency}ms)`);
+        console.log(`│ Status: OK (${formatDuration(latency)})`);
         console.log(`│ IP: ${userIP}`);
         console.log(`│ Daily Requests: ${currentCount}`);
         if (query.url) {
@@ -313,3 +322,4 @@ const forwardRequest = async (res, endpoint, query) => {
 
 module.exports = forwardRequest;
 module.exports.getDailyRequestCount = getDailyRequestCount;
+module.exports.formatDuration = formatDuration;

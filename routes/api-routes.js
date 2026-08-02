@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forwardRequest = require('../utils/forward-request');
-const { getDailyRequestCount } = forwardRequest;
+const { getDailyRequestCount, formatDuration } = forwardRequest;
 const { requireAuth } = require('../utils/auth-middleware');
 const fs = require('fs');
 const path = require('path');
@@ -190,7 +190,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
 
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (GENIMG)`);
-    console.log(`│ Status: OK (${latency}ms)`);
+    console.log(`│ Status: OK (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ Prompt: ${prompt}`);
@@ -213,7 +213,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
     const latency = Date.now() - startTime;
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (GENIMG)`);
-    console.log(`│ Status: FAILED (${latency}ms)`);
+    console.log(`│ Status: FAILED (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ Prompt: ${prompt}`);
@@ -294,7 +294,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
-      console.log(`│ Status: ${isCached ? 'CACHED (5 min TTL)' : 'OK'} (${latency}ms)`);
+      console.log(`│ Status: ${isCached ? 'CACHED (5 min TTL)' : 'OK'} (${formatDuration(latency)})`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Daily Requests: ${currentCount}`);
       console.log(`│ Query: ${q}`);
@@ -359,7 +359,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
-      console.log(`│ Status: FAILED (${latency}ms)`);
+      console.log(`│ Status: FAILED (${formatDuration(latency)})`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Daily Requests: ${currentCount}`);
       console.log(`│ Query: ${q}`);
@@ -414,7 +414,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
 
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
-    console.log(`│ Status: OK (${latency}ms)`);
+    console.log(`│ Status: OK (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
@@ -450,7 +450,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
 
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
-    console.log(`│ Status: FAILED (${latency}ms)`);
+    console.log(`│ Status: FAILED (${formatDuration(latency)})`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Daily Requests: ${currentCount}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
