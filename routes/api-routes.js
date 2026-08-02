@@ -201,9 +201,9 @@ router.get('/genimg', (req, res) => handleGenImg(req, res, 'genimg', false));
 router.get('/meta', (req, res) => handleGenImg(req, res, 'meta', true));
 
 // In-memory caching for Pinterest Search (/pinterest-v2 and /goimg)
-// Cache expires after 15 minutes
+// Cache expires after 5 minutes
 const pinSearchCache = new Map();
-const PIN_CACHE_TTL_MS = 15 * 60 * 1000;
+const PIN_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const getCachedPinSearch = (query) => {
   const key = query.trim().toLowerCase();
@@ -267,7 +267,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
-      console.log(`│ Status: ${isCached ? 'CACHED (15 min TTL)' : 'OK'}`);
+      console.log(`│ Status: ${isCached ? 'CACHED (5 min TTL)' : 'OK'}`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Query: ${q}`);
       console.log('└─────────────────────────────────────────');
