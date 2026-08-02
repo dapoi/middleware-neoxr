@@ -34,14 +34,18 @@ const formatDuration = (ms) => {
   return `${mins}m ${secs}s`;
 };
 
-// Helper function to extract device name from query param or headers
-const getDeviceName = (req) => {
-  if (!req) return null;
-  const q = req.query || {};
-  const h = req.headers || {};
-  const dev = q.device || q.device_name || q.deviceName || q.model || h['x-device-name'] || h['x-device-model'];
-  return (dev && dev !== '-') ? dev : null;
+// In-memory device store: maps IP -> device name (registered on /app-config call)
+const deviceStore = new Map();
+
+// Register a device name for an IP (called from /app-config when ?device=... is present)
+const registerDevice = (ip, deviceName) => {
+  if (ip && deviceName && deviceName !== '-') {
+    deviceStore.set(ip, deviceName);
+  }
 };
+
+// Lookup registered device name for an IP
+const getRegisteredDevice = (ip) => deviceStore.get(ip) || null;
 
 // In-memory response caching untuk search endpoints (goimg, meta)
 // Cache expires after 30 minutes - safe untuk search results yang jarang berubah
@@ -121,7 +125,8 @@ const forwardRequest = async (res, endpoint, query) => {
   
   // Track request count per IP per day
   const currentCount = getDailyRequestCount(userIP);
-  const device = getDeviceName(req);
+  // Lookup device name registered when this IP called /app-config
+  const device = getRegisteredDevice(userIP);
   
   // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
   try {
@@ -337,4 +342,5 @@ const forwardRequest = async (res, endpoint, query) => {
 module.exports = forwardRequest;
 module.exports.getDailyRequestCount = getDailyRequestCount;
 module.exports.formatDuration = formatDuration;
-module.exports.getDeviceName = getDeviceName;
+module.exports.registerDevice = registerDevice;
+module.exports.getRegisteredDevice = getRegisteredDevice;
