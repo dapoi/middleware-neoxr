@@ -393,10 +393,13 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
 
     const pinData = await pinRes.json();
 
+    const truncateStr = (str, maxLen = 60) => (str && str.length > maxLen ? str.substring(0, maxLen) + '...' : (str || ''));
+
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
     console.log('│ Status: OK');
     console.log(`│ IP: ${ip}`);
+    console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log('└─────────────────────────────────────────');
 
     if (!isLegacy) {
@@ -424,10 +427,13 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
 
     return res.json(mapped);
   } catch (err) {
+    const truncateStr = (str, maxLen = 60) => (str && str.length > maxLen ? str.substring(0, maxLen) + '...' : (str || ''));
+
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
     console.log('│ Status: FAILED');
     console.log(`│ IP: ${ip}`);
+    console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log(`│ Error: ${err.message}`);
     console.log('└─────────────────────────────────────────');
 
