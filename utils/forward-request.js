@@ -77,6 +77,7 @@ const USER_AGENTS = [
 const getRandomUA = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
 const forwardRequest = async (res, endpoint, query) => {
+  const startTime = Date.now();
   // Get user info for logging
   const req = res.req;
   const userIP = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
@@ -143,10 +144,11 @@ const forwardRequest = async (res, endpoint, query) => {
   const cacheKey = generateCacheKey(endpoint, query);
   const cachedResponse = getCachedResponse(endpoint, cacheKey);
   if (cachedResponse) {
+    const latency = Date.now() - startTime;
     if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpoint.toUpperCase()}`);
-      console.log('│ Status: CACHED (30 min TTL)');
+      console.log(`│ Status: CACHED (${latency}ms)`);
       console.log(`│ IP: ${userIP}`);
       console.log('└─────────────────────────────────────────');
     }
@@ -182,12 +184,14 @@ const forwardRequest = async (res, endpoint, query) => {
         agent: url.startsWith('https:') ? httpsAgent : httpAgent
       });
       
+      const latency = Date.now() - startTime;
+
       // Check if response is ok
       if (!response.ok) {
         if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
           console.log('┌─────────────────────────────────────────');
           console.log(`│ ${endpoint.toUpperCase()}`);
-          console.log(`│ Status: HTTP ERROR ${response.status}`);
+          console.log(`│ Status: HTTP ERROR ${response.status} (${latency}ms)`);
           console.log(`│ IP: ${userIP}`);
           console.log(`│ Daily Requests: ${currentCount}`);
           console.log(`│ Error: ${response.statusText}`);
@@ -228,7 +232,7 @@ const forwardRequest = async (res, endpoint, query) => {
       if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
         console.log('┌─────────────────────────────────────────');
         console.log(`│ ${endpoint.toUpperCase()}`);
-        console.log('│ Status: OK');
+        console.log(`│ Status: OK (${latency}ms)`);
         console.log(`│ IP: ${userIP}`);
         console.log(`│ Daily Requests: ${currentCount}`);
         if (query.url) {

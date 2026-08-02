@@ -157,6 +157,7 @@ router.get('/ig', async (req, res) => {
 
 // Dedicated handler for GenImg AI image generation (/genimg raw, /meta mapped for backward compatibility)
 const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false) => {
+  const startTime = Date.now();
   const prompt = req.query.prompt || req.query.q;
   if (!prompt) return res.status(400).json({ error: '❌ Invalid prompt or query' });
 
@@ -182,10 +183,11 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
     }
 
     const genData = await genRes.json();
+    const latency = Date.now() - startTime;
 
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (GENIMG)`);
-    console.log('│ Status: OK');
+    console.log(`│ Status: OK (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Prompt: ${prompt}`);
     console.log('└─────────────────────────────────────────');
@@ -204,9 +206,10 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
 
     return res.json(mapped);
   } catch (err) {
+    const latency = Date.now() - startTime;
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (GENIMG)`);
-    console.log('│ Status: FAILED');
+    console.log(`│ Status: FAILED (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ Prompt: ${prompt}`);
     console.log(`│ Error: ${err.message}`);
@@ -248,6 +251,7 @@ const setCachedPinSearch = (query, data) => {
 
 // Dedicated handler for Pinterest Search (/pinterest-v2 raw, /goimg mapped for backward compatibility)
 const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', isLegacy = false) => {
+  const startTime = Date.now();
   if (endpointName === 'goimg') {
     const config = getConfig();
     if (!config.isGoImgFeatureActive) {
@@ -280,10 +284,11 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
 
   // Helper function to respond (either raw or mapped)
   const sendResponse = (pinData, isCached = false) => {
+    const latency = Date.now() - startTime;
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
-      console.log(`│ Status: ${isCached ? 'CACHED (5 min TTL)' : 'OK'}`);
+      console.log(`│ Status: ${isCached ? 'CACHED (5 min TTL)' : 'OK'} (${latency}ms)`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Query: ${q}`);
       console.log('└─────────────────────────────────────────');
@@ -343,10 +348,11 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
 
     return sendResponse(pinData, false);
   } catch (err) {
+    const latency = Date.now() - startTime;
     if (!isDefaultQuery) {
       console.log('┌─────────────────────────────────────────');
       console.log(`│ ${endpointName.toUpperCase()} (PINTEREST v2)`);
-      console.log('│ Status: FAILED');
+      console.log(`│ Status: FAILED (${latency}ms)`);
       console.log(`│ IP: ${ip}`);
       console.log(`│ Query: ${q}`);
       console.log(`│ Error: ${err.message}`);
@@ -365,6 +371,7 @@ router.get('/goimg', (req, res) => handlePinterestSearch(req, res, 'goimg', true
 
 // Dedicated handler for Pinterest Pin Downloader (/pin raw, /pin-v2 mapped for backward compatibility)
 const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = false) => {
+  const startTime = Date.now();
   const url = req.query.url;
   if (!url || !url.startsWith('http')) {
     return res.status(400).json({ error: '❌ Invalid URL' });
@@ -392,12 +399,13 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
     }
 
     const pinData = await pinRes.json();
+    const latency = Date.now() - startTime;
 
     const truncateStr = (str, maxLen = 60) => (str && str.length > maxLen ? str.substring(0, maxLen) + '...' : (str || ''));
 
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
-    console.log('│ Status: OK');
+    console.log(`│ Status: OK (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log('└─────────────────────────────────────────');
@@ -427,11 +435,12 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
 
     return res.json(mapped);
   } catch (err) {
+    const latency = Date.now() - startTime;
     const truncateStr = (str, maxLen = 60) => (str && str.length > maxLen ? str.substring(0, maxLen) + '...' : (str || ''));
 
     console.log('┌─────────────────────────────────────────');
     console.log(`│ ${endpointName.toUpperCase()} (PIN API)`);
-    console.log('│ Status: FAILED');
+    console.log(`│ Status: FAILED (${latency}ms)`);
     console.log(`│ IP: ${ip}`);
     console.log(`│ URL: ${truncateStr(url, 60)}`);
     console.log(`│ Error: ${err.message}`);
