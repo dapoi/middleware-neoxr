@@ -34,18 +34,31 @@ const formatDuration = (ms) => {
   return `${mins}m ${secs}s`;
 };
 
-// In-memory device store: maps IP -> device name (registered on /app-config call)
+// In-memory device store: maps "IP-date" -> device name (auto-expires daily, same pattern as requestCounts)
 const deviceStore = new Map();
 
-// Register a device name for an IP (called from /app-config when ?device=... is present)
+// Register a device name for an IP, keyed by IP + today's date
 const registerDevice = (ip, deviceName) => {
-  if (ip && deviceName && deviceName !== '-') {
-    deviceStore.set(ip, deviceName);
+  if (!ip || !deviceName || deviceName === '-') return;
+  const today = new Date().toDateString();
+  deviceStore.set(`${ip}-${today}`, deviceName);
+
+  // Cleanup entries older than yesterday (same cleanup pattern as requestCounts)
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayDate = yesterday.toDateString();
+  for (const [key] of deviceStore) {
+    if (!key.includes(today) && !key.includes(yesterdayDate)) {
+      deviceStore.delete(key);
+    }
   }
 };
 
-// Lookup registered device name for an IP
-const getRegisteredDevice = (ip) => deviceStore.get(ip) || null;
+// Lookup registered device name for an IP (today's entry only)
+const getRegisteredDevice = (ip) => {
+  const today = new Date().toDateString();
+  return deviceStore.get(`${ip}-${today}`) || null;
+};
 
 // In-memory response caching untuk search endpoints (goimg, meta)
 // Cache expires after 30 minutes - safe untuk search results yang jarang berubah

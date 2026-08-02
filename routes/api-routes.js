@@ -562,7 +562,7 @@ const allowedPackageNames = ['com.dapascript.mever'];
 // Serve 100% from RAM with HTTP cache headers
 router.get('/app-config', (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
-  // Register device name per IP if provided (used later in other endpoint logs)
+  // Register device name per IP+date if provided (auto-expires daily, used in other endpoint logs)
   const rawDevice = req.query.device || req.query.device_name || req.query.deviceName || req.query.model
     || req.headers['x-device-name'] || req.headers['x-device-model'];
   if (rawDevice && rawDevice !== '-') registerDevice(ip, rawDevice);
