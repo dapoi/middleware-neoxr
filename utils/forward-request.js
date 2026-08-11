@@ -128,6 +128,8 @@ const forwardRequest = async (res, endpoint, query) => {
     let queryInfo = '';
     if ((endpoint === 'meta' || endpoint === 'goimg') && query.q) {
       queryInfo = ` | query: ${query.q}`;
+    } else if (endpoint === 'youtube' && query.quality) {
+      queryInfo = ` | quality: ${query.quality}${query.type ? ` (${query.type})` : ''}`;
     }
     
     const usageLog = `[{time}] {method} {endpoint} | package: {package} | ip: {ip} | count: {count}/day{queryInfo}\n`
@@ -247,9 +249,6 @@ const forwardRequest = async (res, endpoint, query) => {
       // Cache response untuk search endpoints only (goimg, meta)
       cacheResponse(endpoint, cacheKey, data);
       
-      // Truncate long URLs for clean console logs
-      const truncateStr = (str, maxLen = 60) => (str && str.length > maxLen ? str.substring(0, maxLen) + '...' : (str || ''));
-
       // Beautiful box format success log (skip for default queries)
       if (SHOW_SIMPLE_LOGS && !(endpoint === 'goimg' && query.isDefaultQuery)) {
         console.log('┌─────────────────────────────────────────');
@@ -259,12 +258,14 @@ const forwardRequest = async (res, endpoint, query) => {
         console.log(`│ Daily Requests: ${currentCount}`);
         if (device) console.log(`│ Device: ${device}`);
         if (query.url) {
-          console.log(`│ URL: ${truncateStr(query.url, 60)}`);
+          console.log(`│ URL: ${query.url}`);
         }
         if (endpoint === 'meta' && query.q) {
           console.log(`│ Query: ${query.q}`);
         } else if (endpoint === 'goimg' && query.q && !query.isDefaultQuery) {
           console.log(`│ Query: ${query.q}`);
+        } else if (endpoint === 'youtube' && query.quality) {
+          console.log(`│ Quality: ${query.quality}${query.type ? ` (${query.type})` : ''}`);
         }
         console.log('└─────────────────────────────────────────');
       }
@@ -316,6 +317,8 @@ const forwardRequest = async (res, endpoint, query) => {
       console.log(`│ Query: ${query.q}`);
     } else if (endpoint === 'goimg' && query.q && !query.isDefaultQuery) {
       console.log(`│ Query: ${query.q}`);
+    } else if (endpoint === 'youtube' && query.quality) {
+      console.log(`│ Quality: ${query.quality}${query.type ? ` (${query.type})` : ''}`);
     }
     console.log(`│ Error: ${errorDetails}`);
     console.log('└─────────────────────────────────────────');
