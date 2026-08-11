@@ -34,31 +34,7 @@ const formatDuration = (ms) => {
   return `${mins}m ${secs}s`;
 };
 
-// In-memory device store: maps "IP-date" -> device name (auto-expires daily, same pattern as requestCounts)
-const deviceStore = new Map();
 
-// Register a device name for an IP, keyed by IP + today's date
-const registerDevice = (ip, deviceName) => {
-  if (!ip || !deviceName || deviceName === '-') return;
-  const today = new Date().toDateString();
-  deviceStore.set(`${ip}-${today}`, deviceName);
-
-  // Cleanup entries older than yesterday (same cleanup pattern as requestCounts)
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayDate = yesterday.toDateString();
-  for (const [key] of deviceStore) {
-    if (!key.includes(today) && !key.includes(yesterdayDate)) {
-      deviceStore.delete(key);
-    }
-  }
-};
-
-// Lookup registered device name for an IP (today's entry only)
-const getRegisteredDevice = (ip) => {
-  const today = new Date().toDateString();
-  return deviceStore.get(`${ip}-${today}`) || null;
-};
 
 // In-memory response caching untuk search endpoints (goimg, meta)
 // Cache expires after 30 minutes - safe untuk search results yang jarang berubah
@@ -138,8 +114,8 @@ const forwardRequest = async (res, endpoint, query) => {
   
   // Track request count per IP per day
   const currentCount = getDailyRequestCount(userIP);
-  // Lookup device name registered when this IP called /app-config
-  const device = getRegisteredDevice(userIP);
+  // Get device from headers
+  const device = req.headers['x-device-name'] || req.headers['x-device-model'];
   
   // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
   try {
@@ -355,5 +331,3 @@ const forwardRequest = async (res, endpoint, query) => {
 module.exports = forwardRequest;
 module.exports.getDailyRequestCount = getDailyRequestCount;
 module.exports.formatDuration = formatDuration;
-module.exports.registerDevice = registerDevice;
-module.exports.getRegisteredDevice = getRegisteredDevice;

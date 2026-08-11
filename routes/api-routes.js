@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forwardRequest = require('../utils/forward-request');
-const { getDailyRequestCount, formatDuration, registerDevice, getRegisteredDevice } = forwardRequest;
+const { getDailyRequestCount, formatDuration } = forwardRequest;
 const { requireAuth } = require('../utils/auth-middleware');
 const fs = require('fs');
 const path = require('path');
@@ -167,7 +167,7 @@ const handleGenImg = async (req, res, endpointName = 'GENIMG', isLegacy = false)
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
 
   const currentCount = getDailyRequestCount(ip);
-  const device = getRegisteredDevice(ip);
+  const device = req.headers['x-device-name'] || req.headers['x-device-model'];
 
   try {
     const fetch = require('node-fetch');
@@ -572,10 +572,6 @@ const allowedPackageNames = ['com.dapascript.mever'];
 // Serve 100% from RAM with HTTP cache headers
 router.get('/app-config', (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
-  // Register device name per IP+date if provided (auto-expires daily, used in other endpoint logs)
-  const rawDevice = req.query.device || req.query.device_name || req.query.deviceName || req.query.model
-    || req.headers['x-device-name'] || req.headers['x-device-model'];
-  if (rawDevice && rawDevice !== '-') registerDevice(ip, rawDevice);
 
   const config = getConfig();
   res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
