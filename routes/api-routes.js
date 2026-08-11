@@ -263,7 +263,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
   if (endpointName === 'goimg') {
     const config = getConfig();
     if (!config.isGoImgFeatureActive) {
-      return res.status(503).json({ 
+      return res.status(503).json({
         error: '🚧 GoImg feature is currently disabled',
         details: 'This feature has been temporarily disabled by the administrator.'
       });
@@ -272,15 +272,25 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
 
   let q = req.query.q;
   let isDefaultQuery = false;
-  
+
   if (!q) {
     const defaultQueries = [
       "anime",
-      "meme absurd",
-      "meme shitpost",
       "my bini",
-      "waifu",
-      "kpop"
+      "kpop",
+      "gaming",
+      "funny",
+      "cute animals",
+      "interesting facts",
+      "nature",
+      "cars",
+      "food",
+      "movies",
+      "music",
+      "technology",
+      "travel",
+      "art",
+      "sports"
     ];
     q = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
     isDefaultQuery = true;
@@ -578,7 +588,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
 
   // Always convert youtubeResolutions to array format for storage
   let youtubeResolutions = [];
-  
+
   if (req.body.youtubeResolutions) {
     if (typeof req.body.youtubeResolutions === 'object' && !Array.isArray(req.body.youtubeResolutions)) {
       // Convert boolean object from UI to array of enabled resolutions
@@ -592,14 +602,14 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     }
   } else {
     // Keep current resolutions if not provided
-    youtubeResolutions = Array.isArray(currentConfig.youtubeResolutions) 
-      ? currentConfig.youtubeResolutions 
+    youtubeResolutions = Array.isArray(currentConfig.youtubeResolutions)
+      ? currentConfig.youtubeResolutions
       : Object.keys(currentConfig.youtubeResolutions || {}).filter(key => currentConfig.youtubeResolutions[key]);
   }
 
   // Handle audioQualities the same way as youtubeResolutions
   let audioQualities = [];
-  
+
   if (req.body.audioQualities) {
     if (typeof req.body.audioQualities === 'object' && !Array.isArray(req.body.audioQualities)) {
       // Convert boolean object from UI to array of enabled audio qualities
@@ -613,8 +623,8 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     }
   } else {
     // Keep current audio qualities if not provided
-    audioQualities = Array.isArray(currentConfig.audioQualities) 
-      ? currentConfig.audioQualities 
+    audioQualities = Array.isArray(currentConfig.audioQualities)
+      ? currentConfig.audioQualities
       : Object.keys(currentConfig.audioQualities || {}).filter(key => currentConfig.audioQualities[key]);
   }
 
@@ -632,7 +642,7 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
     maintenanceDay: req.body.maintenanceDay !== undefined ? req.body.maintenanceDay : currentConfig.maintenanceDay,
     reportString: req.body.reportString !== undefined ? req.body.reportString : (currentConfig.reportString || "")
   };
-  
+
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
   invalidateConfigCache(); // force next GET to re-read from disk
@@ -643,21 +653,21 @@ router.post('/app-config', requireAuth, express.json(), (req, res) => {
 router.post('/report', (req, res) => {
   // Read from req.query.message to match @Query("message") in Retrofit
   const message = req.query.message;
-  
+
   if (message === undefined) {
     return res.status(400).json({ error: '❌ message query parameter is required' });
   }
 
   try {
     const configData = { ...getConfig() };
-    
+
     // Save the incoming message into the config's reportString
     configData.reportString = message;
-    
+
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
     invalidateConfigCache(); // reload into memory
-    
+
     // Return 204 No Content (matches Unit in Kotlin)
     res.status(204).send();
   } catch (err) {
