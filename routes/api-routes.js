@@ -300,7 +300,7 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
   const pinUrl = `https://api.neoxr.eu/api/pinterest-v2?q=${encodeURIComponent(q)}&show=25&type=image&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
   const currentCount = getDailyRequestCount(ip);
-  const device = getRegisteredDevice(ip);
+  const device = req.headers['x-device-name'] || req.headers['x-device-model'];
 
   // Helper function to respond (either raw or mapped)
   const sendResponse = (pinData, isCached = false) => {
