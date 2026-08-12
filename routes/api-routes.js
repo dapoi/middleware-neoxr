@@ -405,7 +405,7 @@ const handlePinDownload = async (req, res, endpointName = 'PIN', isLegacy = fals
   const pinUrl = `https://api.neoxr.eu/api/pin?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
   const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
   const currentCount = getDailyRequestCount(ip);
-  const device = getRegisteredDevice(ip);
+  const device = req.headers['x-device-name'] || req.headers['x-device-model'];
 
   try {
     const fetch = require('node-fetch');
