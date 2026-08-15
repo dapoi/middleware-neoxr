@@ -159,7 +159,7 @@ app.post('/admin/logout', (req, res) => {
 
 // API routes under /api with download rate limiting for specific endpoints
 // Middleware to restrict access to /api except for allowed endpoints
-const allowedApiEndpoints = ['/', '/app-config', '/report', '/applemusic', '/auth-check', '/douyin', '/fb', '/genimg', '/goimg', '/ig', '/meta', '/pin', '/pin-v2', '/pinterest-v2', '/pixiv', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
+const allowedApiEndpoints = ['/', '/app-config', '/report', '/applemusic', '/capcut', '/douyin', '/fb', '/genimg', '/goimg', '/ig', '/meta', '/pin', '/pin-v2', '/pinterest-v2', '/pixiv', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
 const allowedPackageNames = ['com.dapascript.mever'];
 app.use('/api', (req, res, next) => {
   // exception for /app-config and /report
