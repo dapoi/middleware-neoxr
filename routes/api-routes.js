@@ -100,6 +100,7 @@ router.get('/', (req, res) => {
     message: '🚀 API nyala!',
     endpoints: {
       applemusic: '/api/applemusic?url=<applemusic_url>',
+      capcut: '/api/capcut?url=<capcut_url>',
       douyin: '/api/douyin?url=<douyin_url>',
       fb: '/api/fb?url=<video_url>',
       genimg: '/api/genimg?prompt=<prompt>',
@@ -130,6 +131,14 @@ router.get('/applemusic', async (req, res) => {
     return res.status(400).json({ error: '❌ Invalid URL' });
   }
   await forwardRequest(res, 'applemusic', { url });
+});
+
+router.get('/capcut', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: '❌ Invalid URL' });
+  }
+  await forwardRequest(res, 'capcut', { url });
 });
 
 router.get('/douyin', async (req, res) => {
