@@ -174,7 +174,7 @@ app.use('/api', (req, res, next) => {
     return res.status(403).json({ error: 'Access to this endpoint is not allowed.' });
   }
   // Apply download rate limiter to download endpoints
-  const downloadEndpoints = ['/applemusic', '/douyin', '/fb', '/genimg', '/goimg', '/ig', '/meta', '/pin', '/pin-v2', '/pinterest-v2', '/pixiv', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
+  const downloadEndpoints = ['/applemusic', '/capcut', '/douyin', '/fb', '/genimg', '/goimg', '/ig', '/meta', '/pin', '/pin-v2', '/pinterest-v2', '/pixiv', '/soundcloud', '/spotify', '/terabox', '/threads', '/tiktok', '/twitter', '/videy', '/youtube'];
   const isDownloadEndpoint = downloadEndpoints.some(endpoint => req.path.startsWith(endpoint));
   if (isDownloadEndpoint) {
     burstLimiter(req, res, (err) => {
