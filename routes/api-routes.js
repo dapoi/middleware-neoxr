@@ -285,21 +285,12 @@ const handlePinterestSearch = async (req, res, endpointName = 'PINTEREST-V2', is
   if (!q) {
     const defaultQueries = [
       "anime",
-      "my bini",
-      "kpop",
-      "gaming",
-      "funny",
-      "cute animals",
-      "interesting facts",
-      "nature",
-      "cars",
-      "food",
-      "movies",
-      "music",
-      "technology",
-      "travel",
-      "art",
-      "sports"
+      "sports",
+      "sport car",
+      "waifu halal",
+      "teknologi",
+      "meme shitpost",
+      "youtuber"
     ];
     q = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
     isDefaultQuery = true;
