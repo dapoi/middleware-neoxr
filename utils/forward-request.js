@@ -116,51 +116,7 @@ const forwardRequest = async (res, endpoint, query) => {
   const currentCount = getDailyRequestCount(userIP);
   // Get device from headers
   const device = req.headers['x-device-name'] || req.headers['x-device-model'];
-  
-  // Log endpoint usage for analytics, including X-Package-Name header, method, and IP
-  try {
-    const req = res.req;
-    let packageName = (req && req.headers && req.headers['x-package-name']) || '-';
-    const method = (req && req.method) || '-';
-    const ip = (req && (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || req.socket?.remoteAddress)) || '-';
-    
-    // Include query information for certain endpoints (track all goimg queries in usage.log)
-    let queryInfo = '';
-    if ((endpoint === 'meta' || endpoint === 'goimg') && query.q) {
-      queryInfo = ` | query: ${query.q}`;
-    } else if (endpoint === 'youtube' && query.quality) {
-      queryInfo = ` | quality: ${query.quality}${query.type ? ` (${query.type})` : ''}`;
-    }
-    
-    const usageLog = `[{time}] {method} {endpoint} | package: {package} | ip: {ip} | count: {count}/day{queryInfo}\n`
-      .replace('{time}', new Date().toISOString())
-      .replace('{method}', method)
-      .replace('{endpoint}', endpoint)
-      .replace('{package}', packageName)
-      .replace('{ip}', ip)
-      .replace('{count}', currentCount)
-      .replace('{queryInfo}', queryInfo);
-    
-    const fs = require('fs');
-    const logPath = require('path').join(__dirname, '../usage.log');
-    const MAX_LOG_SIZE = 5 * 1024 * 1024; // 5MB
 
-    // Rotate if log exceeds max size
-    try {
-      const stat = fs.statSync(logPath);
-      if (stat.size >= MAX_LOG_SIZE) {
-        fs.renameSync(logPath, logPath + '.old');
-      }
-    } catch (_) { /* file doesn't exist yet, skip */ }
-
-    fs.appendFile(
-      logPath,
-      usageLog,
-      err => { if (err && process.env.NODE_ENV !== 'production') console.error('Usage log error:', err); }
-    );
-  } catch (e) {
-    if (process.env.NODE_ENV !== 'production') console.error('Usage log error:', e);
-  }
   // Check if API_KEY is available
   if (!API_KEY) {
     console.error('API_KEY is not set in environment variables');
