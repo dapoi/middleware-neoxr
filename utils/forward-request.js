@@ -141,8 +141,20 @@ const forwardRequest = async (res, endpoint, query) => {
       .replace('{count}', currentCount)
       .replace('{queryInfo}', queryInfo);
     
-    require('fs').appendFile(
-      require('path').join(__dirname, '../usage.log'),
+    const fs = require('fs');
+    const logPath = require('path').join(__dirname, '../usage.log');
+    const MAX_LOG_SIZE = 5 * 1024 * 1024; // 5MB
+
+    // Rotate if log exceeds max size
+    try {
+      const stat = fs.statSync(logPath);
+      if (stat.size >= MAX_LOG_SIZE) {
+        fs.renameSync(logPath, logPath + '.old');
+      }
+    } catch (_) { /* file doesn't exist yet, skip */ }
+
+    fs.appendFile(
+      logPath,
       usageLog,
       err => { if (err && process.env.NODE_ENV !== 'production') console.error('Usage log error:', err); }
     );
