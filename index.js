@@ -109,6 +109,16 @@ app.get('/healthz', (_req, res) => res.status(200).json({ status: 'ok' }));
 // Page routes (must be before static to ensure login protection works)
 app.use('/', pageRoutes);
 
+// Redirect old domain app-ads.txt to new canonical URL for backward compatibility
+// Old app installs (mever.zeabur.app) will be redirected to the new domain (mever.my.id)
+app.get('/app-ads.txt', (req, res, next) => {
+  const host = req.hostname;
+  if (host.includes('zeabur.app')) {
+    return res.redirect(301, 'https://mever.my.id/app-ads.txt');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Admin login routes
